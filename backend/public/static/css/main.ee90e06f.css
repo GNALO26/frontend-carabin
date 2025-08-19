@@ -1,0 +1,2 @@
+@tailwind base;@tailwind components;@tailwind utilities;body{background-color:#f5f7fa;color:#1f2937;font-family:Inter,sans-serif;margin:0;padding:0}h1,h2,h3,h4,h5,h6{font-weight:700}.btn-primary,.btn-secondary,.input-field,.quiz-card{@apply w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500}.fade-in{animation:fadeIn .5s ease-in-out}@keyframes fadeIn{0%{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/*# sourceMappingURL=main.ee90e06f.css.map*/

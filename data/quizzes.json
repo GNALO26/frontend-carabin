@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "Tissu épithélial",
+    "description": "Quiz sur les tissus épithéliaux",
+    "category": "tissu-epithelial",
+    "difficulty": "medium",
+    "duration": 15,
+    "questions": [
+      {
+        "id": 1,
+        "text": "Quelle est la fonction principale de l'épithélium?",
+        "options": [
+          "Protection",
+          "Sécrétion",
+          "Absorption",
+          "Toutes ces réponses"
+        ],
+        "correctAnswer": 3
+      }
+    ]
+  }
+]
