@@ -12,7 +12,7 @@ services:
       - key: MONGODB_URI
         sync: false   # ⚠️ à renseigner manuellement dans Render Dashboard
 
-  - type: static
+  - type: static_site
     name: carabin-quiz-frontend
     branch: main
     rootDir: frontend
