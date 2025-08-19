@@ -1,21 +1,23 @@
 services:
-  - type: web_service
+  - type: web
     name: carabin-quiz-backend
     env: node
     branch: main
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    rootDir: backend
+    buildCommand: "npm install"
+    startCommand: "npm start"
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        sync: false   # ⚠️ à renseigner dans Render Dashboard
+        sync: false   # ⚠️ à renseigner manuellement dans Render Dashboard
 
-  - type: static_site
+  - type: static
     name: carabin-quiz-frontend
     branch: main
-    buildCommand: cd frontend && npm install && npm run build
-    publishPath: frontend/build
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
         value: https://carabin-quiz-backend.onrender.com/api
