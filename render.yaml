@@ -1,5 +1,5 @@
 services:
-  - type: web_service
+  - type: web
     name: carabin-quiz-backend
     env: node
     branch: main
@@ -21,4 +21,3 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         value: https://carabin-quiz-backend.onrender.com/api
-        
