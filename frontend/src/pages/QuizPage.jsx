@@ -1,38 +1,83 @@
-import React, { useState } from "react";
+// frontend/src/pages/QuizPage.jsx
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { QuizService } from "../services/quiz";
 
 const QuizPage = () => {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const questions = [
-    {
-      question: "Quel est l’organe responsable de la production d’insuline ?",
-      options: ["Foie", "Pancréas", "Rate", "Rein"],
-      answer: "Pancréas",
-    },
-    {
-      question: "Combien de chambres possède le cœur humain ?",
-      options: ["2", "3", "4", "5"],
-      answer: "4",
-    },
-  ];
+  const [quiz, setQuiz] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      try {
+        const data = await QuizService.getQuizById(id);
+        setQuiz(data);
+      } catch (err) {
+        setError("Impossible de charger le quiz.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQuiz();
+  }, [id]);
 
   const handleAnswer = (option) => {
-    if (option === questions[currentQuestion].answer) {
-      setScore(score + 1);
-    }
+    setAnswers({
+      ...answers,
+      [quiz.questions[currentQuestion]._id]: option,
+    });
     setCurrentQuestion(currentQuestion + 1);
   };
 
+  const handleSubmit = async () => {
+    try {
+      const res = await QuizService.submitQuiz(id, answers, Date.now());
+      setResult(res);
+    } catch (err) {
+      setError("Erreur lors de la soumission du quiz.");
+    }
+  };
+
+  if (loading) return <p>Chargement du quiz...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+
+  if (!quiz) return <p>Aucun quiz trouvé.</p>;
+
+  if (result) {
+    return (
+      <div className="text-center bg-white shadow-lg rounded-xl p-8 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold text-blue-800 mb-4">Résultat 🎉</h1>
+        <p className="text-lg">
+          Score :{" "}
+          <span className="font-bold">{result.score}</span> /{" "}
+          {quiz.questions.length}
+        </p>
+        <button
+          onClick={() => navigate("/quizzes")}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Retour aux quiz
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
-      {currentQuestion < questions.length ? (
+      {currentQuestion < quiz.questions.length ? (
         <div className="bg-white shadow-lg rounded-xl p-6 max-w-xl mx-auto">
           <h1 className="text-xl font-bold mb-4">
-            {questions[currentQuestion].question}
+            {quiz.questions[currentQuestion].text}
           </h1>
           <div className="grid gap-3">
-            {questions[currentQuestion].options.map((opt) => (
+            {quiz.questions[currentQuestion].options.map((opt) => (
               <button
                 key={opt}
                 onClick={() => handleAnswer(opt)}
@@ -44,12 +89,14 @@ const QuizPage = () => {
           </div>
         </div>
       ) : (
-        <div className="text-center bg-white shadow-lg rounded-xl p-8 max-w-md mx-auto">
-          <h1 className="text-2xl font-bold text-blue-800 mb-4">Résultat 🎉</h1>
-          <p className="text-lg">
-            Score : <span className="font-bold">{score}</span> /{" "}
-            {questions.length}
-          </p>
+        <div className="text-center">
+          <p className="mb-4">Vous avez répondu à toutes les questions ✅</p>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            Soumettre mes réponses
+          </button>
         </div>
       )}
     </div>

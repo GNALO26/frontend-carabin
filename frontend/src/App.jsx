@@ -5,11 +5,15 @@ import { AuthProvider } from './contexts/AuthContext';
 // Pages publiques & utilisateurs
 import HomePage from './pages/HomePage';
 import QuizPage from './pages/QuizPage';
+import QuizListPage from './pages/QuizListPage';
 import DashboardPage from './pages/DashboardPage';
 import PaymentPage from './pages/PaymentPage';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';  // ✅ ajouté
+import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+
+// ✅ Page pour afficher un QCM généré (HTML)
+import GeneratedQuizPage from './pages/GeneratedQuizPage';
 
 // Pages Admin
 import AdminLoginPage from './admin/LoginPage';
@@ -34,9 +38,14 @@ function App() {
           <Route element={<Layout />}>
             {/* Routes publiques */}
             <Route path="/" element={<HomePage />} />
+            <Route path="/quizzes" element={<QuizListPage />} />
             <Route path="/quiz/:id" element={<QuizPage />} />
+
+            {/* ✅ Route spéciale pour afficher les quiz générés */}
+            <Route path="/generated/:fileName" element={<GeneratedQuizPage />} />
+
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} /> {/* ✅ ajoutée */}
+            <Route path="/register" element={<RegisterPage />} />
 
             {/* Routes utilisateur authentifié */}
             <Route element={<PrivateRoute />}>
