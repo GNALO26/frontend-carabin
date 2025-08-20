@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import API from "../api"; // ton axios configuré
-import { useNavigate } from "react-router-dom";
 
 const PaymentPage = () => {
-  const [amount, setAmount] = useState(5000); // ex: 5000 CFA
+  const [amount] = useState(5000); // ex: 5000 CFA
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handlePayment = async () => {
     try {
