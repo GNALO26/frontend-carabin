@@ -1,10 +1,11 @@
-import React from 'react';
+import React from "react";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-800 text-white py-6">
-      <div className="container mx-auto px-4 text-center">
-        <p>&copy; {new Date().getFullYear()} Quiz de Carabin. All rights reserved.</p>
+    <footer className="bg-blue-800 text-white py-4 mt-10">
+      <div className="container mx-auto text-center text-sm">
+        © {new Date().getFullYear()} <span className="font-semibold">Carabin Quiz</span>. 
+        Tous droits réservés.
       </div>
     </footer>
   );
