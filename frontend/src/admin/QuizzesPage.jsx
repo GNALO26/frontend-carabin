@@ -29,7 +29,7 @@ const QuizzesPage = () => {
     if (!window.confirm('Supprimer ce quiz définitivement?')) return;
     
     try {
-      await api.delete('/admin/quizzes/${id}');
+      await api.delete(`/admin/quizzes/${id}`);
       setQuizzes(quizzes.filter(q => q._id !== id));
     } catch (err) {
       setError('Échec de la suppression');
@@ -78,7 +78,7 @@ const QuizzesPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => navigate('/admin/quizzes/edit/${quiz._id}')}
+                    onClick={() => navigate(`/admin/quizzes/edit/${quiz._id}`)}
                   >
                     Éditer
                   </Button>

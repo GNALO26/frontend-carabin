@@ -17,7 +17,7 @@ const AdminDashboard = () => {
         }
 
         const response = await fetch('/api/admin/dashboard', {
-          headers: { 'Authorization': 'Bearer ${token}' } // Correction: backticks pour linterpolation
+          headers: { Authorization: `Bearer ${token}` }
         });
 
         if (!response.ok) {

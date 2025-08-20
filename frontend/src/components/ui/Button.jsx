@@ -19,7 +19,7 @@ const Button = ({
   
   return (
     <button
-      className={'${baseClasses} ${variants[variant]} ${widthClass}'}
+      className={`${baseClasses} ${variants[variant]} ${widthClass}`}
       {...props}
     >
       {children}

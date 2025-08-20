@@ -1,19 +1,17 @@
 import React, { useState } from "react";
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import Button from '../ui/Button';
-
+//import { useAuth } from '../../contexts/AuthContext';
+// import Button from '../ui/Button'; // <- pas utilisé
 const Header = () => {
-  const { user, logout } = useAuth();
+  // const { user, logout } = useAuth(); // <- pas utilisés
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  
   // Ne pas afficher le header sur certaines pages
   if (location.pathname.includes('/admin') || location.pathname.includes('/quiz/')) {
     return null;
   }
 
- return (
+  return (
     <header className="bg-blue-700 text-white shadow-md">
       <div className="container mx-auto flex justify-between items-center p-4">
         <Link to="/" className="text-xl font-bold tracking-wide">

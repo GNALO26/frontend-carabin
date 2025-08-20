@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
       if (!token) return;
       
       const response = await api.get('/auth/me', {
-        headers: { Authorization: 'Bearer ${token}' }
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data) {
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const response = await api.get('/auth/me', {
-            headers: { Authorization: 'Bearer ${token}' }
+            headers: { Authorization: `Bearer ${token}` }
           });
           
           setUser(response.data.user);
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
   const validateAccessCode = async (accessCode) => {
     try {
       const response = await api.post('/auth/validate-access-code', { accessCode }, {
-        headers: { Authorization: 'Bearer ${user.token}' }
+        headers: { Authorization: `Bearer ${user.token}` }
       });
       
       // Rafraîchir les données après validation
