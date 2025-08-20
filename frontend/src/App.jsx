@@ -8,6 +8,7 @@ import QuizPage from './pages/QuizPage';
 import DashboardPage from './pages/DashboardPage';
 import PaymentPage from './pages/PaymentPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';  // ✅ ajouté
 import NotFoundPage from './pages/NotFoundPage';
 
 // Pages Admin
@@ -35,6 +36,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/quiz/:id" element={<QuizPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} /> {/* ✅ ajoutée */}
 
             {/* Routes utilisateur authentifié */}
             <Route element={<PrivateRoute />}>
