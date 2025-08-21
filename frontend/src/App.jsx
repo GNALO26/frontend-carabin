@@ -3,30 +3,30 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Pages publiques & utilisateurs
-import HomePage from './pages/HomePage.jsx';
-import QuizPage from './pages/QuizPage.jsx';
-import QuizListPage from './pages/QuizListPage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import PaymentPage from './pages/PaymentPage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
-import GeneratedQuizPage from './pages/GeneratedQuizPage.jsx';
+import HomePage from './pages/HomePage';
+import QuizPage from './pages/QuizPage';
+import QuizListPage from './pages/QuizListPage';
+import DashboardPage from './pages/DashboardPage';
+import PaymentPage from './pages/PaymentPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import NotFoundPage from './pages/NotFoundPage';
+import GeneratedQuizPage from './pages/GeneratedQuizPage';
 
 // Pages Admin
-import AdminLoginPage from './src/admin/LoginPage.jsx';
-import AdminDashboard from './src/admin/DashboardPage.jsx';
-import QuizEditor from './src/admin/QuizEditor.jsx';
-import AdminQuizzesPage from './src/admin/QuizzesPage.jsx';
-import UsersPage from './src/admin/UsersPage.jsx';
+import AdminLoginPage from './pages/admin/LoginPage';
+import AdminDashboard from './pages/admin/DashboardPage';
+import QuizEditor from './pages/admin/QuizEditor';
+import QuizzesPage from './pages/admin/QuizzesPage';
+import UsersPage from './pages/admin/UsersPage';
 
 // Layouts
-import Layout from './components/layout/Layout.jsx';
-import AdminLayout from './components/layout/AdminLayout.jsx';
+import Layout from './components/layout/Layout';
+import AdminLayout from './components/layout/AdminLayout';
 
 // Routes sécurisées
-import PrivateRoute from './components/auth/PrivateRoute.jsx';
-import AdminRoute from './components/auth/AdminRoute.jsx';
+import PrivateRoute from './components/auth/PrivateRoute';
+import AdminRoute from './components/auth/AdminRoute';
 
 function App() {
   return (
@@ -54,7 +54,7 @@ function App() {
           <Route element={<AdminRoute />}>
             <Route element={<AdminLayout />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/quizzes" element={<AdminQuizzesPage />} />
+              <Route path="/admin/quizzes" element={<QuizzesPage />} />
               <Route path="/admin/quizzes/new" element={<QuizEditor />} />
               <Route path="/admin/quizzes/edit/:id" element={<QuizEditor />} />
               <Route path="/admin/users" element={<UsersPage />} />
