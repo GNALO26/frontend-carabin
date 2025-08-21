@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import API from '../../services/api';
+import React, { useState, useEffect } from "react";
+import API from "../../services/api";
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -11,7 +12,7 @@ const UsersPage = () => {
         const { data } = await API.get("/admin/users");
         setUsers(data.users);
       } catch (err) {
-        console.error("Erreur lors du chargement des utilisateurs");
+        setError("Erreur lors du chargement des utilisateurs");
       } finally {
         setLoading(false);
       }
@@ -19,77 +20,36 @@ const UsersPage = () => {
 
     fetchUsers();
   }, []);
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  if (loading) return <div>Chargement...</div>;
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Gestion des Utilisateurs</h1>
+      <h1 className="text-2xl font-bold mb-6">Utilisateurs</h1>
+      
+      {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4">{error}</div>}
 
-      {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
-          <p>{error}</p>
-        </div>
-      )}
-
-      <div className="bg-white shadow-md rounded overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Statut
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date d'inscription
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Dernière connexion
-              </th>
+      <table className="min-w-full table-auto">
+        <thead>
+          <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+            <th className="py-3 px-6 text-left">Email</th>
+            <th className="py-3 px-6 text-left">Rôle</th>
+            <th className="py-3 px-6 text-left">Date d'inscription</th>
+          </tr>
+        </thead>
+        <tbody className="text-gray-600 text-sm font-light">
+          {users.map(user => (
+            <tr key={user._id} className="border-b border-gray-200 hover:bg-gray-100">
+              <td className="py-3 px-6 text-left">{user.email}</td>
+              <td className="py-3 px-6 text-left">{user.role}</td>
+              <td className="py-3 px-6 text-left">{new Date(user.createdAt).toLocaleDateString()}</td>
             </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user._id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{user.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isPremium ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
-                    {user.isPremium ? 'Premium' : 'Gratuit'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(user.createdAt)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.lastLogin ? formatDate(user.lastLogin) : 'Jamais'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
       {users.length === 0 && !loading && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Aucun utilisateur</p>
-        </div>
+        <p className="text-center text-gray-500 mt-4">Aucun utilisateur trouvé.</p>
       )}
     </div>
   );
