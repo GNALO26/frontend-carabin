@@ -8,8 +8,7 @@ const HomePage = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-blue-800 mb-6">
-            🩺 Bienvenue sur Quiz de Carabin
-          </h1>
+            🩺 Bienvenue sur Quiz de Carabin </h1>
           <p className="text-lg md:text-xl text-gray-700 mb-10 max-w-3xl mx-auto">
             Testez vos connaissances médicales à travers des quiz interactifs et enrichis. 
             Connectez-vous pour suivre votre progression et défiez vos amis !

@@ -23,7 +23,7 @@ const AdminDashboard = () => {
         }
 
         const response = await API.get('/admin/stats', {
-          headers: { Authorization: `Bearer ${token} `}
+          headers: { Authorization: `Bearer ${token}` }
         });
         setStats(response.data);
       } catch (err) {
@@ -38,7 +38,7 @@ const AdminDashboard = () => {
   }, [navigate]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CI', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'XOF',
       minimumFractionDigits: 0
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Tableau de Bord Administrateur</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Tableau de Bord Administrateur</h1>
         <button
           onClick={() => {
             localStorage.removeItem('adminToken');
@@ -76,26 +76,29 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Utilisateurs</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-700">Utilisateurs</h2>
           <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
         </div>
+        
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Quiz</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-700">Quiz</h2>
           <p className="text-3xl font-bold text-green-600">{stats.totalQuizzes}</p>
         </div>
+        
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Revenus</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-700">Revenus</h2>
           <p className="text-3xl font-bold text-yellow-600">{formatCurrency(stats.totalRevenue)}</p>
         </div>
+        
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Abonnements</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-700">Abonnements</h2>
           <p className="text-3xl font-bold text-purple-600">{stats.activeSubscriptions}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Actions Rapides</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Actions Rapides</h2>
           <div className="space-y-3">
             <button
               onClick={() => navigate('/admin/quizzes/new')}
@@ -119,8 +122,10 @@ const AdminDashboard = () => {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Activité Récente</h2>
-          <p className="text-gray-600">Aucune activité récente</p>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Activité Récente</h2>
+          <div className="text-gray-600">
+            <p>Aucune activité récente</p>
+          </div>
         </div>
       </div>
     </div>
