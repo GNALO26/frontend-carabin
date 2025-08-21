@@ -1,4 +1,11 @@
-// Obtenir les quiz en vedette
+const express = require('express');
+const router = express.Router();
+const Quiz = require('../models/Quiz');
+const Result = require('../models/Result');
+const authMiddleware = require('../middlewares/authMiddleware');
+const checkSubscription = require('../middlewares/checkSubscription');
+
+// ✅ Route pour les quiz en vedette (DOIT ÊTRE APRÈS l'initialisation du router)
 router.get('/featured', async (req, res) => {
   try {
     const quizzes = await Quiz.find({ free: true }).limit(3);
@@ -7,13 +14,6 @@ router.get('/featured', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
-
-const express = require('express');
-const router = express.Router();
-const Quiz = require('../models/Quiz');
-const Result = require('../models/Result');
-const authMiddleware = require('../middlewares/authMiddleware');
-const checkSubscription = require('../middlewares/checkSubscription');
 
 // ✅ Quiz gratuit accessible à tous les utilisateurs connectés
 router.get('/free', authMiddleware, async (req, res) => {

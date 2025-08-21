@@ -10,15 +10,15 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        sync: false   # à définir dans Render
+        sync: false   # ⚠️ à définir dans le dashboard Render
 
   - type: web
     name: carabin-quiz-frontend
-    env: node   # ⬅️ CHANGER static → node
+    env: node   # ✅ passé en node
     branch: main
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    startCommand: "npx serve -s build"  # ⬅️ sert le build
+    startCommand: "npx serve -s build"   # ✅ sert ton build React
     envVars:
       - key: REACT_APP_API_URL
         value: https://carabin-quiz-backend.onrender.com/api
