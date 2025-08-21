@@ -6,6 +6,7 @@ const HomePage = () => {
   const [featuredQuizzes, setFeaturedQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -29,92 +30,193 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 flex flex-col">
-      {/* Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Navigation moderne inspirée d'Asin.bj */}
+      <nav className="bg-white shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-blue-800">🩺 Quiz de Carabin</span>
+              <span className="text-2xl font-bold text-blue-800 flex items-center">
+                <svg className="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 11H5M19 11C20.1046 11 21 11.8954 21 13V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V13C3 11.8954 3.89543 11 5 11M19 11V9C19 7.89543 18.1046 7 17 7M5 11V9C5 7.89543 5.89543 7 7 7M7 7V5C7 3.89543 7.89543 3 9 3H15C16.1046 3 17 3.89543 17 5V7M7 7H17" stroke="#1e40af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Quiz de Carabin
+              </span>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            {/* Menu desktop */}
+            <div className="hidden md:flex items-center space-8">
+              <Link to="/" className="text-blue-800 font-medium hover:text-blue-600 transition-colors">Accueil</Link>
+              <Link to="/quizzes" className="text-gray-700 hover:text-blue-600 transition-colors">Quiz</Link>
+              <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors">À propos</Link>
+              <Link to="/contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</Link>
+            </div>
+            
+            <div className="hidden md:flex items-center space-x-4">
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
                 >
-                  Mon tableau de bord
+                  Tableau de bord
                 </Link>
               ) : (
                 <>
                   <Link
                     to="/login"
-                    className="px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors"
+                    className="px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors font-medium"
                   >
                     Connexion
                   </Link>
                   <Link
                     to="/register"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
                   >
                     Inscription
                   </Link>
                 </>
               )}
             </div>
+            
+            {/* Menu mobile button */}
+            <div className="md:hidden">
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-gray-700 hover:text-blue-600 focus:outline-none"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
+        
+        {/* Menu mobile */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-white px-4 pt-2 pb-4 border-t">
+            <div className="flex flex-col space-y-3">
+              <Link to="/" className="text-blue-800 font-medium py-2">Accueil</Link>
+              <Link to="/quizzes" className="text-gray-700 py-2">Quiz</Link>
+              <Link to="/about" className="text-gray-700 py-2">À propos</Link>
+              <Link to="/contact" className="text-gray-700 py-2">Contact</Link>
+              
+              <div className="pt-4 border-t border-gray-200 flex flex-col space-y-3">
+                {user ? (
+                  <Link
+                    to="/dashboard"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-center"
+                  >
+                    Tableau de bord
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="px-4 py-2 text-blue-600 text-center"
+                    >
+                      Connexion
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-center"
+                    >
+                      Inscription
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-blue-800 mb-6">
-            Testez vos connaissances médicales
-          </h1>
-          <p className="text-lg md:text-xl text-gray-700 mb-10 max-w-3xl mx-auto">
-            Quiz interactifs et enrichis pour les étudiants en médecine. 
-            Connectez-vous pour suivre votre progression et défiez vos collègues !
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/register"
-              className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
-            >
-              Commencer maintenant
-            </Link>
-            <Link
-              to="/quizzes"
-              className="px-8 py-4 bg-white text-blue-600 border border-blue-600 font-semibold rounded-lg shadow-md hover:bg-blue-50 transition duration-300"
-            >
-              Voir les quiz disponibles
-            </Link>
+      {/* Hero Section moderne avec dégradé */}
+      <section className="relative py-16 md:py-24 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-1/2 mb-10 md:mb-0">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                Testez vos connaissances médicales
+              </h1>
+              <p className="text-xl mb-8 text-blue-100">
+                Quiz interactifs et enrichis pour les étudiants en médecine. 
+                Connectez-vous pour suivre votre progression et défiez vos collègues !
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  to="/register"
+                  className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300 text-center"
+                >
+                  Commencer maintenant
+                </Link>
+                <Link
+                  to="/quizzes"
+                  className="px-8 py-4 bg-transparent text-white border-2 border-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition duration-300 text-center"
+                >
+                  Voir les quiz disponibles
+                </Link>
+              </div>
+            </div>
+            <div className="md:w-1/2 flex justify-center">
+              <div className="relative w-full max-w-md">
+                <div className="absolute -top-6 -left-6 w-32 h-32 bg-yellow-400 rounded-full opacity-20 animate-pulse"></div>
+                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-green-400 rounded-full opacity-20 animate-pulse delay-500"></div>
+                <div className="relative bg-white rounded-2xl shadow-2xl p-6 text-gray-800">
+                  <div className="flex items-center mb-4">
+                    <div className="w-3 h-3 rounded-full bg-red-400 mr-2"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-4">Quiz d'anatomie</h3>
+                  <p className="mb-6">Quel est le plus grand organe du corps humain ?</p>
+                  <div className="space-y-3">
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">A. Le foie</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">B. La peau</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">C. L'intestin grêle</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">D. Le poumon</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Quizzes Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">Quiz Populaires</h2>
+      {/* Featured Quizzes Section avec design de cartes moderne */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Quiz Populaires</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Découvrez les quiz les plus populaires parmi nos étudiants en médecine</p>
+          </div>
           
           {loading ? (
             <div className="flex justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredQuizzes.length > 0 ? (
                 featuredQuizzes.map((quiz) => (
-                  <div key={quiz._id} className="bg-blue-50 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
+                  <div key={quiz._id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+                    <div className="h-40 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
                     <div className="p-6 flex flex-col flex-grow">
-                      <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
+                      <h3 className="text-xl font-semibold mb-2 text-gray-900">{quiz.title}</h3>
                       <p className="text-gray-600 mb-4 flex-grow">{quiz.description}</p>
                       <div className="flex justify-between items-center mt-auto">
-                        <span className="text-sm text-gray-500">{quiz.questions?.length || 0} questions</span>
+                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{quiz.questions?.length || 0} questions</span>
                         <Link 
                           to={`/quiz/${quiz._id}`}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
                         >
                           Commencer
                         </Link>
@@ -123,20 +225,23 @@ const HomePage = () => {
                   </div>
                 ))
               ) : (
-                <div className="col-span-3 text-center py-8">
-                  <div className="bg-gray-100 rounded-lg p-8 max-w-2xl mx-auto">
-                    <p className="text-gray-500 text-lg mb-4">Aucun quiz disponible pour le moment.</p>
-                    <p className="text-gray-400">Revenez bientôt pour découvrir nos nouveaux quiz!</p>
+                <div className="col-span-3 text-center py-12">
+                  <div className="bg-white rounded-xl p-8 max-w-2xl mx-auto shadow-md">
+                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun quiz disponible pour le moment</h3>
+                    <p className="text-gray-600">Revenez bientôt pour découvrir nos nouveaux quiz!</p>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          <div className="text-center mt-10">
+          <div className="text-center mt-12">
             <Link
               to="/quizzes"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-white text-blue-600 border border-blue-600 font-medium rounded-md hover:bg-blue-600 hover:text-white transition-colors"
             >
               Voir tous les quiz
               <svg className="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -147,100 +252,198 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-12 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">Pourquoi choisir Quiz de Carabin ?</h2>
+      {/* Features Section avec icônes modernes */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Pourquoi choisir Quiz de Carabin ?</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Une plateforme conçue spécialement pour les étudiants en médecine</p>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm flex flex-col items-center">
-              <div className="text-4xl mb-4 text-blue-600 bg-blue-100 p-4 rounded-full">📚</div>
-              <h3 className="text-xl font-semibold mb-2">Quiz Variés</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6 bg-gray-50 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full text-blue-600 mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Quiz Variés</h3>
               <p className="text-gray-600">Accédez à une large sélection de quiz médicaux pour tester vos connaissances.</p>
             </div>
             
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm flex flex-col items-center">
-              <div className="text-4xl mb-4 text-blue-600 bg-blue-100 p-4 rounded-full">📊</div>
-              <h3 className="text-xl font-semibold mb-2">Suivi de Progression</h3>
+            <div className="text-center p-6 bg-gray-50 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full text-green-600 mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Suivi de Progression</h3>
               <p className="text-gray-600">Suivez vos résultats et améliorez vos compétences au fil du temps.</p>
             </div>
             
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm flex flex-col items-center">
-              <div className="text-4xl mb-4 text-blue-600 bg-blue-100 p-4 rounded-full">🏆</div>
-              <h3 className="text-xl font-semibold mb-2">Défis entre Amis</h3>
+            <div className="text-center p-6 bg-gray-50 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full text-purple-600 mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Défis entre Amis</h3>
               <p className="text-gray-600">Défiez vos collègues et comparez vos scores pour une expérience compétitive.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">Abonnez-vous pour plus de fonctionnalités</h2>
+      {/* Pricing Section moderne avec carte en évidence */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Abonnez-vous pour plus de fonctionnalités</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Accédez à tous nos quiz et fonctionnalités avancées</p>
+          </div>
           
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto text-white">
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold mb-2">Abonnement Premium</h3>
-                <p>Accédez à tous nos quiz et fonctionnalités avancées</p>
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="md:flex">
+                <div className="md:w-2/3 p-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Abonnement Premium</h3>
+                  <p className="text-gray-600 mb-6">Tout ce dont vous avez besoin pour exceller dans vos études médicales</p>
+                  
+                  <div className="flex items-end mb-6">
+                    <span className="text-4xl font-bold text-blue-600">5 000 FCFA</span>
+                    <span className="text-gray-500 ml-2">/ mois</span>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-center">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Accès à tous les quiz spécialisés
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Statistiques détaillées de progression
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Certificats de réussite
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Défis exclusifs
+                    </li>
+                    <li className="flex items-center">
+                    <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Support prioritaire
+                    </li>
+                  </ul>
+                  
+                  <Link
+                    to="/payment"
+                    className="block w-full bg-blue-600 text-white text-center py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    S'abonner maintenant
+                  </Link>
+                </div>
+                <div className="md:w-1/3 bg-blue-600 text-white p-8 flex flex-col justify-center">
+                  <div className="text-center">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <h4 className="text-xl font-bold mb-2">Premium Exclusive</h4>
+                    <p className="text-blue-100">Rejoignez des milliers d'étudiants qui améliorent leurs connaissances médicales avec notre abonnement premium.</p>
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex items-end justify-center mb-6">
-                <span className="text-4xl font-bold">5 000 FCFA</span>
-                <span className="ml-2 opacity-90">/ mois</span>
-              </div>
-              
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center">
-                  <svg className="h-5 w-5 text-green-300 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Accès à tous les quiz spécialisés
-                </li>
-                <li className="flex items-center">
-                  <svg className="h-5 w-5 text-green-300 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Statistiques détaillées de progression
-                </li>
-                <li className="flex items-center">
-                  <svg className="h-5 w-5 text-green-300 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Certificats de réussite
-                </li>
-                <li className="flex items-center">
-                  <svg className="h-5 w-5 text-green-300 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Défis exclusifs
-                </li>
-              </ul>
-              
-              <Link
-                to="/payment"
-                className="block w-full bg-white text-blue-600 text-center py-3 px-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-              >
-                S'abonner maintenant
-              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-12 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0 text-center md:text-left">
-              <span className="text-2xl font-bold">🩺 Quiz de Carabin</span>
+      {/* CTA Section */}
+      <section className="py-16 bg-blue-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-6">Prêt à tester vos connaissances ?</h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">Rejoignez la communauté Quiz de Carabin dès aujourd'hui</p>
+          <Link
+            to="/register"
+            className="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300"
+          >
+            Créer un compte gratuit
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer moderne */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <span className="text-2xl font-bold flex items-center">
+                <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 11H5M19 11C20.1046 11 21 11.8954 21 13V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V13C3 11.8954 3.89543 11 5 11M19 11V9C19 7.89543 18.1046 7 17 7M5 11V9C5 7.89543 5.89543 7 7 7M7 7V5C7 3.89543 7.89543 3 9 3H15C16.1046 3 17 3.89543 17 5V7M7 7H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Quiz de Carabin
+              </span>
               <p className="text-gray-400 mt-2">Testez vos connaissances médicales</p>
             </div>
-            <div className="text-center md:text-right">
-              <p className="text-gray-400">© 2025 Quiz de Carabin. Tous droits réservés.</p>
-              <p className="text-gray-400 mt-2">Contact: quizdecarabin4@gmail.com</p>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Navigation</h4>
+              <ul className="space-y-2">
+                <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Accueil</Link></li>
+                <li><Link to="/quizzes" className="text-gray-400 hover:text-white transition-colors">Quiz</Link></li>
+                <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">À propos</Link></li>
+                <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
+              </ul>
             </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Légal</h4>
+              <ul className="space-y-2">
+                <li><Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">Politique de confidentialité</Link></li>
+                <li><Link to="/terms" className="text-gray-400 hover:text-white transition-colors">Conditions d'utilisation</Link></li>
+                <li><Link to="/cookies" className="text-gray-400 hover:text-white transition-colors">Politique des cookies</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Contact</h4>
+              <ul className="space-y-2">
+                <li className="text-gray-400">quizdecarabin4@gmail.com</li>
+                <li className="text-gray-400">+229 XX XX XX XX</li>
+                <li className="flex space-x-4 pt-2">
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12z" />
+                    </svg>
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                    </svg>
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10zm3.7 14.077c-1.75.362-5.453.362-7.203 0-1.896-.391-2.117-1.538-2.246-2.077-.02-.086-.029-.176-.029-.265v-2.97c0-.182.108-.35.27-.431l2.5-1.423c.094-.055.204-.055.298 0l2.5 1.423c.161.08.27.25.27.431v2.97c0 .089-.01.179-.03.265-.056.242-.17.642-1.017.898.26.432.908 1.01 1.746 1.45 1.703.888 4.026 1.088 5.633.313.32-.154.48-.519.352-.85-.25-.656-.985-.954-1.643-.711zm-7.1-4.873v1.719c-.002.115.033.226.094.317.224.392.893.517 1.322.234.12-.08.206-.2.243-.337.026.082.064.16.112.232.224.392.893.517 1.322.234.12-.08.206-.2.243-.337.026.082.064.16.112.232.225.392.894.517 1.322.234.12-.08.206-.2.244-.337.044.137.12.262.222.363.3.3.788.3 1.088 0 .3-.3.3-.788 0-1.088l-.008-.008v-2.318l-2.0-1.14-2.0 1.14v1.718zm7.5 2.0v.5c0 .093-.02.185-.06.27-.224.392-.893.517-1.322.234-.12-.08-.206-.2-.243-.337-.026.082-.064.16-.112.232-.224.392-.893.517-1.322.234-.12-.08-.206-.2-.243-.337-.026.082-.064.16-.112.232-.225.392-.894.517-1.322.234-.12-.08-.206-.2-.244-.337-.044.137-.12.262-.222.363-.3.3-.788.3-1.088 0-.3-.3-.3-.788 0-1.088v-2.5c0-.093.02-.185.06-.27.225-.392.894-.517 1.322-.234.12.08.206.2.243.337.026-.082.064-.16.112-.232.225-.392.894-.517 1.322-.234.12.08.206.2.243.337.026-.082.064-.16.112-.232.224-.392.893-.517 1.322-.234.12.08.206.2.243.337.026-.082.064-.16.112-.232.224-.392.893-.517 1.322-.234.12.08.206.2.243.337.044-.137.12-.262.222-.363.3-.3.788-.3 1.088 0 .3.3.3.788 0 1.088v2.5z" />
+                    </svg>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>© 2025 Quiz de Carabin. Tous droits réservés.</p>
           </div>
         </div>
       </footer>
