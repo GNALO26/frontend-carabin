@@ -1,13 +1,10 @@
+// ==================== RegisterPage.jsx ====================
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    passwordConfirm: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "", passwordConfirm: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -21,10 +18,10 @@ const RegisterPage = () => {
     e.preventDefault();
 
     if (formData.password !== formData.passwordConfirm) {
-      return setError("❌ Les mots de passe ne correspondent pas.");
+      return setError("Les mots de passe ne correspondent pas");
     }
     if (formData.password.length < 6) {
-      return setError("❌ Le mot de passe doit contenir au moins 6 caractères.");
+      return setError("Le mot de passe doit contenir au moins 6 caractères");
     }
 
     try {
@@ -33,14 +30,10 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
       });
-
       localStorage.setItem("token", data.token);
       navigate("/dashboard");
     } catch (err) {
-      setError(
-        err.response?.data?.error ||
-          "Erreur lors de l'inscription. Veuillez réessayer."
-      );
+      setError(err.response?.data?.error || "Erreur lors de l'inscription. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -61,48 +54,47 @@ const RegisterPage = () => {
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium mb-2">Adresse e-mail</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Adresse e-mail</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
               placeholder="exemple@email.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Mot de passe</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
               placeholder="******** (min. 6 caractères)"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Confirmer le mot de passe</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le mot de passe</label>
             <input
               type="password"
               name="passwordConfirm"
               value={formData.passwordConfirm}
               onChange={handleChange}
               required
-              placeholder="********"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 disabled:opacity-50"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition duration-300 disabled:opacity-50"
           >
             {loading ? "Création en cours..." : "Créer un compte"}
           </button>
@@ -114,9 +106,14 @@ const RegisterPage = () => {
             Connectez-vous
           </Link>
         </p>
+
+        <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-xs">
+          <p>© 2025 Quiz de Carabin. Tous droits réservés.</p>
+        </footer>
       </div>
     </div>
   );
 };
 
 export default RegisterPage;
+
