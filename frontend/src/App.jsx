@@ -14,11 +14,11 @@ import NotFoundPage from './pages/NotFoundPage.jsx';
 import GeneratedQuizPage from './pages/GeneratedQuizPage.jsx';
 
 // Pages Admin
-import AdminLoginPage from './pages/admin/LoginPage.jsx';
-import AdminDashboard from './pages/admin/DashboardPage.jsx';
-import QuizEditor from './pages/admin/QuizEditor.jsx';
-import AdminQuizzesPage from './pages/admin/QuizzesPage.jsx';
-import UsersPage from './pages/admin/UsersPage.jsx';
+import AdminLoginPage from './pages/admin/LoginPage.js';
+import AdminDashboard from './pages/admin/DashboardPage.js';
+import QuizEditor from './pages/admin/QuizEditor.js';
+import AdminQuizzesPage from './pages/admin/QuizzesPage.js';
+import UsersPage from './pages/admin/UsersPage.js';
 
 // Layouts
 import Layout from './components/layout/Layout.jsx';
