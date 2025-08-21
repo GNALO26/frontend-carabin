@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import API from "../api"; // axios configuré vers ton backend
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -11,7 +11,6 @@ const RegisterPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -26,18 +25,21 @@ const RegisterPage = () => {
       return;
     }
 
-    setLoading(true);
-    setError("");
-
     try {
-      await register({
+      setLoading(true);
+      setError("");
+
+      // ✅ On envoie bien un JSON { name, email, password }
+      const { data } = await API.post("/auth/register", {
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
+
+      localStorage.setItem("token", data.token);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Erreur lors de l’inscription");
+      setError(err.response?.data?.error || "Erreur lors de l’inscription");
     } finally {
       setLoading(false);
     }
@@ -66,11 +68,12 @@ const RegisterPage = () => {
               onChange={handleChange}
               required
               className="input-field"
+              placeholder="Ex: Jean Dupont"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Adresse email</label>
+            <label className="block text-sm font-medium">Adresse e-mail</label>
             <input
               type="email"
               name="email"
@@ -78,6 +81,7 @@ const RegisterPage = () => {
               onChange={handleChange}
               required
               className="input-field"
+              placeholder="exemple@email.com"
             />
           </div>
 
@@ -90,6 +94,7 @@ const RegisterPage = () => {
               onChange={handleChange}
               required
               className="input-field"
+              placeholder="********"
             />
           </div>
 
@@ -102,6 +107,7 @@ const RegisterPage = () => {
               onChange={handleChange}
               required
               className="input-field"
+              placeholder="********"
             />
           </div>
 

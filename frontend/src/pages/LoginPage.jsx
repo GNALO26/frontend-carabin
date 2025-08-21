@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import API from "../api"; // axios configuré vers ton backend
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +9,6 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -18,14 +17,21 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
 
     try {
-      await login(formData.email, formData.password);
+      setLoading(true);
+      setError("");
+
+      // ✅ Envoi correct au backend
+      const { data } = await API.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      localStorage.setItem("token", data.token);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Email ou mot de passe invalide");
+      setError(err.response?.data?.error || "Erreur de connexion");
     } finally {
       setLoading(false);
     }
@@ -33,7 +39,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-200 p-6">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg fade-in">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg fade-in">
         <h2 className="text-2xl font-bold text-center text-blue-800 mb-6">
           Connexion
         </h2>
@@ -46,7 +52,7 @@ const LoginPage = () => {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium">Adresse email</label>
+            <label className="block text-sm font-medium">Adresse e-mail</label>
             <input
               type="email"
               name="email"
@@ -54,6 +60,7 @@ const LoginPage = () => {
               onChange={handleChange}
               required
               className="input-field"
+              placeholder="exemple@email.com"
             />
           </div>
 
@@ -66,6 +73,7 @@ const LoginPage = () => {
               onChange={handleChange}
               required
               className="input-field"
+              placeholder="********"
             />
           </div>
 

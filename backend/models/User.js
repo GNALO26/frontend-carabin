@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
   email: {
     type: String,
     required: true,
@@ -12,6 +17,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -22,7 +32,7 @@ const userSchema = new mongoose.Schema({
   }]
 });
 
-// Méthode pour vérifier l'accès premium
+// ✅ Méthode pour vérifier l'accès premium
 userSchema.methods.hasPremiumAccess = async function() {
   const Subscription = mongoose.model('Subscription');
   const activeSub = await Subscription.findOne({

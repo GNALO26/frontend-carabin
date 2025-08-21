@@ -1,4 +1,3 @@
-// backend/routes/authRoutes.js
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
@@ -9,7 +8,11 @@ const authMiddleware = require("../middlewares/authMiddleware");
 // ===================== REGISTER =====================
 router.post("/register", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Tous les champs sont requis." });
+    }
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
@@ -22,6 +25,7 @@ router.post("/register", async (req, res) => {
 
     // Créer l'utilisateur
     const user = await User.create({
+      name,
       email,
       passwordHash: hashedPassword,
       createdAt: new Date(),
@@ -34,7 +38,7 @@ router.post("/register", async (req, res) => {
 
     res.status(201).json({
       token,
-      user: { id: user._id, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error(error);
@@ -47,63 +51,31 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Vérifier si l'utilisateur existe
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email et mot de passe requis." });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ error: "Utilisateur non trouvé." });
     }
 
-    // Vérifier le mot de passe
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return res.status(400).json({ error: "Mot de passe incorrect." });
     }
 
-    // Générer le token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
 
     res.json({
       token,
-      user: { id: user._id, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erreur serveur." });
-  }
-});
-
-// ===================== VALIDATE ACCESS CODE =====================
-router.post("/validate-code", async (req, res) => {
-  try {
-    const { code } = req.body;
-    const user = await User.findOne({
-      "subscription.accessCode": code,
-      "subscription.expiryDate": { $gt: new Date() },
-    });
-
-    if (!user) {
-      return res.status(400).json({ error: "Code invalide ou expiré" });
-    }
-
-    // Activer l'abonnement
-    user.subscription.active = true;
-    user.subscription.activatedAt = new Date();
-    await user.save();
-
-    // Générer un nouveau token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "30d",
-    });
-
-    res.json({
-      success: true,
-      token,
-      expiryDate: user.subscription.expiryDate,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 });
 
