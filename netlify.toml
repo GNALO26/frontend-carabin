@@ -1,5 +1,5 @@
 [build]
-  
+  base = "frontend"  # Si votre frontend est dans un dossier "frontend"
   command = "npm run build"
   publish = "build"  
 
