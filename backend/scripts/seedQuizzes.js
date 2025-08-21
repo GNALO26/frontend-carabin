@@ -1,18 +1,18 @@
-// backend/scripts/seedQuizzes.js
 const mongoose = require('mongoose');
 const Quiz = require('../models/Quiz');
+require('dotenv').config();
 
 // Connexion à la base de données
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 
-// Données des quiz
+// Données des quiz avec les catégories valides
 const sampleQuizzes = [
   {
     title: "Anatomie du cœur",
     description: "Testez vos connaissances sur l'anatomie cardiaque",
-    category: "cardiologie",
+    category: "physiologie-renale", // Catégorie valide
     difficulty: "moyen",
     free: true,
     questions: [
@@ -33,7 +33,7 @@ const sampleQuizzes = [
   {
     title: "Pharmacologie de base",
     description: "Questions sur les médicaments et leurs effets",
-    category: "pharmacologie",
+    category: "tissu-epithelial", // Catégorie valide
     difficulty: "facile",
     free: true,
     questions: [
@@ -42,6 +42,21 @@ const sampleQuizzes = [
         options: ["Paracétamol", "Warfarine", "Ibuprofène", "Oméprazole"],
         correctAnswer: 1,
         explanation: "La warfarine est un anticoagulant couramment utilisé."
+      }
+    ]
+  },
+  {
+    title: "Physiologie rénale",
+    description: "Quiz sur les fonctions rénales",
+    category: "physiologie-renale", // Catégorie valide
+    difficulty: "difficile",
+    free: false,
+    questions: [
+      {
+        text: "Où se produit la majorité de la réabsorption de l'eau dans le néphron?",
+        options: ["Glomérule", "Tubule contourné proximal", "Anse de Henle", "Tubule contourné distal"],
+        correctAnswer: 2,
+        explanation: "L'anse de Henle est responsable de la réabsorption de l'eau et des électrolytes."
       }
     ]
   }

@@ -12,7 +12,6 @@ function generateAccessCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Fonction pour initier un paiement
 async function initiatePayment(paymentData) {
   try {
     const { amount, transactionId, description, customer_email, customer_id } = paymentData;
@@ -39,7 +38,6 @@ async function initiatePayment(paymentData) {
   }
 }
 
-// Fonction pour vérifier un paiement
 async function verifyPayment({ transactionId, paymentId }) {
   try {
     const response = await axios.post(`${CINETPAY_BASE_URL}/payment/check`, {
@@ -54,18 +52,16 @@ async function verifyPayment({ transactionId, paymentId }) {
 
     if (status === 'ACCEPTED') {
       const code = generateAccessCode();
-      const expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours
+      const expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
       payment.status = 'completed';
       payment.accessCode = code;
       payment.accessExpiry = expiry;
       await payment.save();
 
-      // Récupération de l'utilisateur par email
       const user = await User.findOne({ email: payment.email });
       if (!user) throw new Error("Utilisateur introuvable pour ce paiement");
 
-      // Création d'une souscription
       await Subscription.create({
         userId: user._id,
         startDate: new Date(),
@@ -73,11 +69,9 @@ async function verifyPayment({ transactionId, paymentId }) {
         accessCode: code
       });
 
-      // Associer le paiement à l'utilisateur
       user.payments.push(payment._id);
       await user.save();
 
-      // Envoi du code d'accès par email
       if (user.email) {
         await sendAccessCode(user.email, code, expiry);
       }

@@ -8,7 +8,7 @@ const questionSchema = new mongoose.Schema({
     validate: [val => val.length >= 2, 'Doit avoir au moins 2 options']
   },
   correctAnswers: {
-    type: [Number], // plusieurs réponses possibles (index des options correctes)
+    type: [Number],
     required: true
   },
   justification: String,
@@ -18,13 +18,23 @@ const questionSchema = new mongoose.Schema({
 const quizSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   description: { type: String, default: "" },
-  duration: { type: Number, default: 30 }, // en minutes
+  duration: { type: Number, default: 30 },
   questions: [questionSchema],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   category: {
     type: String,
-    enum: ['tissu-epithelial', 'tissu-conjonctif', 'tissu-cartilagineux', 'tissu-osseux', 'physiologie-renale'],
+    enum: [
+      'tissu-epithelial', 
+      'tissu-conjonctif', 
+      'tissu-cartilagineux', 
+      'tissu-osseux', 
+      'physiologie-renale',
+      'cardiologie', // Ajout de nouvelles catégories
+      'pharmacologie',
+      'neurologie',
+      'anatomie'
+    ],
     default: 'physiologie-renale'
   },
   difficulty: {
@@ -35,7 +45,6 @@ const quizSchema = new mongoose.Schema({
   free: { type: Boolean, default: true }
 });
 
-// Mise à jour automatique de la date
 quizSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();

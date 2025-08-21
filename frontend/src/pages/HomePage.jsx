@@ -8,15 +8,11 @@ const HomePage = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est connecté
     const token = localStorage.getItem("token");
     if (token) {
-      // Ici vous devriez décoder le JWT ou faire une requête pour obtenir les infos utilisateur
-      // Pour l'instant, on va juste indiquer qu'un utilisateur est connecté
       setUser({ isLoggedIn: true });
     }
 
-    // Charger les quiz en vedette
     const fetchFeaturedQuizzes = async () => {
       try {
         const { data } = await API.get("/quiz/featured");
