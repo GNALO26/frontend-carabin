@@ -51,3 +51,17 @@ body {
 .footer {
   @apply mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-xs;
 }
+
+/* Navigation */
+.nav-link {
+  @apply text-gray-700 hover:text-blue-600 transition-colors duration-300;
+}
+
+.nav-link.active {
+  @apply text-blue-600 font-semibold;
+}
+
+/* Cards */
+.card {
+  @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6;
+}
