@@ -13,19 +13,20 @@ import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
 import GeneratedQuizPage from './pages/GeneratedQuizPage';
 
-// Pages Admin - COMMENTÉES TEMPORAIREMENT
-// import AdminLoginPage from './pages/admin/LoginPage';
-// import AdminDashboard from './pages/admin/DashboardPage';
-// import QuizEditor from './pages/admin/QuizEditor';
-// import AdminQuizzesPage from './pages/admin/QuizzesPage';
+// Pages Admin
+import AdminLoginPage from './pages/admin/LoginPage';
+import AdminDashboard from './pages/admin/DashboardPage';
+import QuizEditor from './pages/admin/QuizEditor';
+import QuizzesPage from './pages/admin/QuizzesPage';
+import UsersPage from './pages/admin/UsersPage';
 
 // Layouts
 import Layout from './components/layout/Layout';
-// import AdminLayout from './components/layout/AdminLayout';
+import AdminLayout from './components/layout/AdminLayout';
 
 // Routes sécurisées
 import PrivateRoute from './components/auth/PrivateRoute';
-// import AdminRoute from './components/auth/AdminRoute';
+import AdminRoute from './components/auth/AdminRoute';
 
 function App() {
   return (
@@ -48,16 +49,17 @@ function App() {
             </Route>
           </Route>
 
-          {/* --------- Layout Admin - COMMENTÉ TEMPORAIREMENT --------- */}
-          {/* <Route path="/admin/login" element={<AdminLoginPage />} /> */}
-          {/* <Route element={<AdminRoute />}> */}
-          {/*   <Route element={<AdminLayout />}> */}
-          {/*     <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
-          {/*     <Route path="/admin/quizzes" element={<AdminQuizzesPage />} /> */}
-          {/*     <Route path="/admin/quizzes/new" element={<QuizEditor />} /> */}
-          {/*     <Route path="/admin/quizzes/edit/:id" element={<QuizEditor />} /> */}
-          {/*   </Route> */}
-          {/* </Route> */}
+          {/* --------- Layout Admin --------- */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route element={<AdminRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/quizzes" element={<QuizzesPage />} />
+              <Route path="/admin/quizzes/new" element={<QuizEditor />} />
+              <Route path="/admin/quizzes/edit/:id" element={<QuizEditor />} />
+              <Route path="/admin/users" element={<UsersPage />} />
+            </Route>
+          </Route>
 
           {/* --------- 404 --------- */}
           <Route path="*" element={<NotFoundPage />} />

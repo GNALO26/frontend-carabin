@@ -10,13 +10,20 @@ const API = axios.create({
   },
 });
 
-// Intercepteur pour ajouter le token
+// Intercepteur pour ajouter le token d'authentification aux requêtes
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    const adminToken = localStorage.getItem('adminToken');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
+    }
+    
     return config;
   },
   (error) => {
@@ -24,12 +31,13 @@ API.interceptors.request.use(
   }
 );
 
-// Intercepteur pour les réponses
+// Intercepteur pour gérer les erreurs globales
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
+      localStorage.removeItem('adminToken');
       window.location.href = '/login';
     }
     return Promise.reject(error);

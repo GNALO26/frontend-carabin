@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API from '../../services/api';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({});
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalQuizzes: 0,
+    totalRevenue: 0,
+    activeSubscriptions: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -16,18 +22,13 @@ const AdminDashboard = () => {
           return;
         }
 
-        const response = await fetch('/api/admin/dashboard', {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await API.get('/admin/stats', {
+          headers: { Authorization: `Bearer ${token} `}
         });
-
-        if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des données');
-        }
-
-        const data = await response.json();
-        setStats(data);
+        setStats(response.data);
       } catch (err) {
-        setError(err.message);
+        setError('Erreur lors du chargement des statistiques');
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -44,106 +45,84 @@ const AdminDashboard = () => {
     }).format(amount);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Tableau de Bord Administrateur</h1>
-        <button 
+        <button
           onClick={() => {
             localStorage.removeItem('adminToken');
             navigate('/admin/login');
           }}
-          className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"
+          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
         >
           Déconnexion
         </button>
       </div>
-      
-      {isLoading ? (
-        <div>Chargement des données...</div>
-      ) : error ? (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Utilisateurs</h2>
-              <p className="text-3xl font-bold">{stats.totalUsers || 0}</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Abonnements Actifs</h2>
-              <p className="text-3xl font-bold">{stats.activeSubscriptions || 0}</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Quiz</h2>
-              <p className="text-3xl font-bold">{stats.totalQuizzes || 0}</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Revenus</h2>
-              <p className="text-3xl font-bold">
-                {stats.revenue?.[0]?.total ? formatCurrency(stats.revenue[0].total) : formatCurrency(0)}
-              </p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Gestion des Quiz</h2>
-                <button 
-                  onClick={() => navigate('/admin/quizzes')}
-                  className="text-blue-600 hover:underline"
-                >
-                  Voir tous
-                </button>
-              </div>
-              {/* Liste réduite des quiz */}
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Derniers Paiements</h2>
-                <button 
-                  onClick={() => navigate('/admin/payments')}
-                  className="text-blue-600 hover:underline"
-                >
-                  Voir tous
-                </button>
-              </div>
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Utilisateur</th>
-                    <th className="text-left">Montant</th>
-                    <th className="text-left">Statut</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentPayments?.map(payment => (
-                    <tr key={payment._id}>
-                      <td>{payment.user?.name || 'Anonyme'}</td>
-                      <td>{formatCurrency(payment.amount)}</td>
-                      <td>
-                        <span className={`px-2 py-1 rounded ${
-                          payment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {payment.status === 'completed' ? 'Complété' : 
-                           payment.status === 'pending' ? 'En attente' : 'Échoué'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
+
+      {error && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+          <p>{error}</p>
+        </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-2">Utilisateurs</h2>
+          <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-2">Quiz</h2>
+          <p className="text-3xl font-bold text-green-600">{stats.totalQuizzes}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-2">Revenus</h2>
+          <p className="text-3xl font-bold text-yellow-600">{formatCurrency(stats.totalRevenue)}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-2">Abonnements</h2>
+          <p className="text-3xl font-bold text-purple-600">{stats.activeSubscriptions}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Actions Rapides</h2>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/admin/quizzes/new')}
+              className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-left"
+            >
+              Créer un nouveau quiz
+            </button>
+            <button
+              onClick={() => navigate('/admin/users')}
+              className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-left"
+            >
+              Gérer les utilisateurs
+            </button>
+            <button
+              onClick={() => navigate('/admin/quizzes')}
+              className="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded text-left"
+            >
+              Voir tous les quiz
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Activité Récente</h2>
+          <p className="text-gray-600">Aucune activité récente</p>
+        </div>
+      </div>
     </div>
   );
 };
