@@ -1,19 +1,41 @@
-// frontend/src/api.js
-import axios from "axios";
-import { API_URL } from "./config";
+import axios from 'axios';
 
+// Configuration de l'URL de base de l'API
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://carabin-quiz.onrender.com/api';
+
+// Création de l'instance axios
 const API = axios.create({
-  baseURL: API_URL,
-  withCredentials: true, // ✅ utile si tu utilises cookies JWT
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Intercepteur pour ajouter le token automatiquement
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token"); // ou sessionStorage selon ton choix
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Intercepteur pour ajouter le token d'authentification aux requêtes
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
+
+// Intercepteur pour gérer les erreurs globales
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default API;
