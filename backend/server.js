@@ -1,58 +1,54 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
+const mongoose = require("mongoose");
 
+// Import des routes
 const authRoutes = require("./routes/authRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const quizRoutes = require("./routes/quizRoutes");
-const resultRoutes = require("./routes/resultRoutes");
+// 👉 Ajoute tes autres routes ici
+// const quizRoutes = require("./routes/quizRoutes");
+// const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
-app.use(cors());
+
+// ================== Middleware ==================
+app.use(
+  cors({
+    origin: [
+      /\.netlify\.app$/, // autorise ton frontend Netlify
+      "http://localhost:3000", // autorise ton dev local
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-// =================== MongoDB ===================
-const mongoUri =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/carabin_quiz";
-
+// ================== Connexion MongoDB ==================
 mongoose
-  .connect(mongoUri)
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connecté"))
   .catch((err) => {
-    console.error("❌ MongoDB error", err.message);
+    console.error("❌ Erreur MongoDB:", err.message);
     process.exit(1);
   });
 
-// =================== Routes API ===================
+// ================== Routes API ==================
 app.use("/api/auth", authRoutes);
-app.use("/api/payment", paymentRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/quiz", quizRoutes);
-app.use("/api/results", resultRoutes);
+// 👉 Ajoute les autres routes API ici
+// app.use("/api/quiz", quizRoutes);
+// app.use("/api/payment", paymentRoutes);
 
-// ✅ Liste des quiz statiques générés
-app.get("/api/quizzes", (req, res) => {
-  const dir = path.join(__dirname, "public");
-  if (!fs.existsSync(dir)) return res.json([]);
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".html"));
-  res.json(files);
+// ================== Healthcheck ==================
+app.get("/api/health", (req, res) => {
+  res.json({ message: "✅ API is running!" });
 });
 
-// ✅ Healthcheck
-app.get("/health", (req, res) => res.json({ ok: true }));
-
-// ✅ Middleware d’erreurs global
-app.use((err, req, res, next) => {
-  console.error("🔥 Erreur serveur:", err);
-  res.status(500).json({ error: "Erreur serveur" });
-});
-
-// =================== Lancement serveur ===================
+// ================== Démarrage Serveur ==================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+});

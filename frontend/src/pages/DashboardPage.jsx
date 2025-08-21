@@ -9,7 +9,15 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await API.get("/results/stats"); // ⚡ endpoint à créer côté backend
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const { data } = await API.get("/results/stats", {
+          headers: { Authorization: `Bearer ${token}` }, // ✅ correction ici
+        });
         setStats(data);
       } catch (err) {
         console.error("Erreur stats:", err);
@@ -20,32 +28,47 @@ const DashboardPage = () => {
     fetchStats();
   }, []);
 
-  if (loading) return <p className="text-center">Chargement...</p>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-blue-800 mb-6">Tableau de bord</h1>
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-white shadow rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-2">Quiz réalisés</h2>
-          <p className="text-4xl font-bold text-blue-700">
-            {stats.quizzesDone}
-          </p>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-blue-800 mb-8 text-center">
+          Tableau de bord
+        </h1>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-10">
+          <div className="bg-white shadow-lg rounded-xl p-6 transform hover:scale-105 transition duration-300">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+              Quiz réalisés
+            </h2>
+            <p className="text-5xl font-bold text-blue-600 text-center">
+              {stats.quizzesDone}
+            </p>
+          </div>
+          <div className="bg-white shadow-lg rounded-xl p-6 transform hover:scale-105 transition duration-300">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+              Score moyen
+            </h2>
+            <p className="text-5xl font-bold text-yellow-500 text-center">
+              {stats.averageScore}%
+            </p>
+          </div>
         </div>
-        <div className="bg-white shadow rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-2">Score moyen</h2>
-          <p className="text-4xl font-bold text-yellow-500">
-            {stats.averageScore}%
-          </p>
+
+        <div className="text-center">
+          <Link
+            to="/quizzes"
+            className="inline-block px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
+          >
+            Faire un nouveau quiz
+          </Link>
         </div>
-      </div>
-      <div className="mt-10 text-center">
-        <Link
-          to="/quizzes"
-          className="px-6 py-3 bg-blue-700 text-white rounded-lg shadow hover:bg-blue-800 transition"
-        >
-          Faire un nouveau quiz
-        </Link>
       </div>
     </div>
   );
