@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuration de l'URL de base de l'API
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://carabin-quiz.onrender.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://carabin-quiz-backend.onrender.com/api';
 
 // Création de l'instance axios
 const API = axios.create({
