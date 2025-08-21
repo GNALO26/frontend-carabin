@@ -29,10 +29,10 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 flex flex-col">
       {/* Navigation */}
       <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <span className="text-2xl font-bold text-blue-800">🩺 Quiz de Carabin</span>
@@ -67,8 +67,8 @@ const HomePage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-blue-800 mb-6">
             Testez vos connaissances médicales
           </h1>
@@ -94,23 +94,23 @@ const HomePage = () => {
       </section>
 
       {/* Featured Quizzes Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-12">Quiz Populaires</h2>
+      <section className="py-12 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">Quiz Populaires</h2>
           
           {loading ? (
             <div className="flex justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredQuizzes.length > 0 ? (
                 featuredQuizzes.map((quiz) => (
-                  <div key={quiz._id} className="bg-blue-50 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="p-6">
+                  <div key={quiz._id} className="bg-blue-50 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
+                    <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
-                      <p className="text-gray-600 mb-4">{quiz.description}</p>
-                      <div className="flex justify-between items-center">
+                      <p className="text-gray-600 mb-4 flex-grow">{quiz.description}</p>
+                      <div className="flex justify-between items-center mt-auto">
                         <span className="text-sm text-gray-500">{quiz.questions?.length || 0} questions</span>
                         <Link 
                           to={`/quiz/${quiz._id}`}
@@ -124,16 +124,19 @@ const HomePage = () => {
                 ))
               ) : (
                 <div className="col-span-3 text-center py-8">
-                  <p className="text-gray-500 text-lg">Aucun quiz disponible pour le moment.</p>
+                  <div className="bg-gray-100 rounded-lg p-8 max-w-2xl mx-auto">
+                    <p className="text-gray-500 text-lg mb-4">Aucun quiz disponible pour le moment.</p>
+                    <p className="text-gray-400">Revenez bientôt pour découvrir nos nouveaux quiz!</p>
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-10">
             <Link
               to="/quizzes"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
             >
               Voir tous les quiz
               <svg className="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -145,24 +148,24 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-12">Pourquoi choisir Quiz de Carabin ?</h2>
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">Pourquoi choisir Quiz de Carabin ?</h2>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-6 bg-white rounded-xl shadow-sm flex flex-col">
               <div className="text-4xl mb-4 text-blue-600">📚</div>
               <h3 className="text-xl font-semibold mb-2">Quiz Variés</h3>
               <p className="text-gray-600">Accédez à une large sélection de quiz médicaux pour tester vos connaissances.</p>
             </div>
             
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
+            <div className="text-center p-6 bg-white rounded-xl shadow-sm flex flex-col">
               <div className="text-4xl mb-4 text-blue-600">📊</div>
               <h3 className="text-xl font-semibold mb-2">Suivi de Progression</h3>
               <p className="text-gray-600">Suivez vos résultats et améliorez vos compétences au fil du temps.</p>
             </div>
             
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
+            <div className="text-center p-6 bg-white rounded-xl shadow-sm flex flex-col">
               <div className="text-4xl mb-4 text-blue-600">🏆</div>
               <h3 className="text-xl font-semibold mb-2">Défis entre Amis</h3>
               <p className="text-gray-600">Défiez vos collègues et comparez vos scores pour une expérience compétitive.</p>
@@ -172,16 +175,18 @@ const HomePage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-12">Abonnez-vous pour plus de fonctionnalités</h2>
+      <section className="py-12 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">Abonnez-vous pour plus de fonctionnalités</h2>
           
-          <div className="bg-blue-50 rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto">
+          <div className="bg-blue-50 rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto">
             <div className="p-8">
-              <h3 className="text-2xl font-bold text-blue-800 mb-4">Abonnement Premium</h3>
-              <p className="text-gray-600 mb-6">Accédez à tous nos quiz et fonctionnalités avancées</p>
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-blue-800 mb-2">Abonnement Premium</h3>
+                <p className="text-gray-600">Accédez à tous nos quiz et fonctionnalités avancées</p>
+              </div>
               
-              <div className="flex items-end mb-6">
+              <div className="flex items-end justify-center mb-6">
                 <span className="text-4xl font-bold text-blue-800">5 000 FCFA</span>
                 <span className="text-gray-500 ml-2">/ mois</span>
               </div>
@@ -225,10 +230,10 @@ const HomePage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-gray-800 text-white py-12 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
+            <div className="mb-6 md:mb-0 text-center md:text-left">
               <span className="text-2xl font-bold">🩺 Quiz de Carabin</span>
               <p className="text-gray-400 mt-2">Testez vos connaissances médicales</p>
             </div>
