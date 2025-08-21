@@ -25,16 +25,10 @@ app.use(
 app.use(express.json());
 
 // ================== Connexion MongoDB ==================
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB connecté"))
-  .catch((err) => {
-    console.error("❌ Erreur MongoDB:", err.message);
-    process.exit(1);
-  });
+// Connexion à MongoDB - version corrigée
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
 // ================== Routes API ==================
 app.use("/api/auth", authRoutes);
