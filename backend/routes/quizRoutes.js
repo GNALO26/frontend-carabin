@@ -1,3 +1,13 @@
+// Obtenir les quiz en vedette
+router.get('/featured', async (req, res) => {
+  try {
+    const quizzes = await Quiz.find({ free: true }).limit(3);
+    res.json({ quizzes });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 const express = require('express');
 const router = express.Router();
 const Quiz = require('../models/Quiz');

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
-import { useAuth } from "../contexts/AuthContext"; // Ajout de l'import
+import { useAuth } from "../contexts/AuthContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -12,7 +12,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth(); // Utilisation du contexte d'authentification
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,7 +41,7 @@ const RegisterPage = () => {
         password: formData.password,
       });
 
-      // Utilisation du contexte pour mettre à jour l'état d'authentification
+      localStorage.setItem("token", data.token);
       login(data.token, data.user);
       navigate("/dashboard");
     } catch (err) {

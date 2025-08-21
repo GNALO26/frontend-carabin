@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
   email: {
     type: String,
     required: true,
@@ -13,7 +9,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
-  passwordHash: {
+  password: {
     type: String,
     required: true
   },
@@ -26,20 +22,31 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  payments: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Payment'
-  }]
+  subscription: {
+    isActive: {
+      type: Boolean,
+      default: false
+    },
+    expiryDate: Date,
+    accessCode: String
+  }
 });
 
-// ✅ Méthode pour vérifier l'accès premium
-userSchema.methods.hasPremiumAccess = async function() {
-  const Subscription = mongoose.model('Subscription');
-  const activeSub = await Subscription.findOne({
-    userId: this._id,
-    expiryDate: { $gt: new Date() }
-  });
-  return !!activeSub;
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+// Compare password method
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Check if user has premium access
+userSchema.methods.hasPremiumAccess = function() {
+  return this.subscription.isActive && this.subscription.expiryDate > new Date();
 };
 
 module.exports = mongoose.model('User', userSchema);

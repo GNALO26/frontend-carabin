@@ -32,7 +32,6 @@ const PaymentPage = () => {
         customer_id: user.id
       });
 
-      // Gestion des différentes structures de réponse possibles
       const paymentUrl = data?.payment_url || data?.data?.payment_url;
       
       if (paymentUrl) {

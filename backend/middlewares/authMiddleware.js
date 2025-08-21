@@ -1,19 +1,27 @@
-// backend/middlewares/authMiddleware.js
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-function authMiddleware(req, res, next) {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) {
-    return res.status(401).json({ error: 'Accès refusé. Aucun token fourni.' });
-  }
-
+const authMiddleware = async (req, res, next) => {
   try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId; // stocke l'ID utilisateur
+    const user = await User.findById(decoded.userId).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Token invalide.' });
+    }
+
+    req.user = user;
+    req.userId = user._id;
     next();
-  } catch (err) {
-    res.status(400).json({ error: 'Token invalide.' });
+  } catch (error) {
+    res.status(401).json({ error: 'Token invalide.' });
   }
-}
+};
 
 module.exports = authMiddleware;

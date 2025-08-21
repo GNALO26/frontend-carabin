@@ -1,7 +1,6 @@
-// backend/middlewares/checkSubscription.js
 const User = require("../models/User");
 
-async function checkSubscription(req, res, next) {
+const checkSubscription = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
 
@@ -9,9 +8,7 @@ async function checkSubscription(req, res, next) {
       return res.status(404).json({ error: "Utilisateur introuvable" });
     }
 
-    const hasAccess = await user.hasPremiumAccess();
-
-    if (!hasAccess) {
+    if (!user.hasPremiumAccess()) {
       return res.status(403).json({ error: "Accès réservé aux abonnés premium" });
     }
 
@@ -20,6 +17,6 @@ async function checkSubscription(req, res, next) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
-}
+};
 
 module.exports = checkSubscription;

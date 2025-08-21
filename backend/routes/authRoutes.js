@@ -1,10 +1,7 @@
-// backend/routes/authRoutes.js
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
 const User = require("../models/User");
-const authMiddleware = require("../middlewares/authMiddleware");
 
 // ===================== REGISTER =====================
 router.post("/register", async (req, res) => {
@@ -17,15 +14,13 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Cet email est déjà utilisé." });
     }
 
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Créer l'utilisateur
-    const user = await User.create({
+    const user = new User({
       email,
-      passwordHash: hashedPassword,
-      createdAt: new Date(),
+      password
     });
+
+    await user.save();
 
     // Générer le token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -54,7 +49,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Vérifier le mot de passe
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({ error: "Mot de passe incorrect." });
     }
