@@ -1,37 +1,47 @@
-// frontend/src/services/quiz.js
-import API from "./api";
+import API from './api';
 
 export const QuizService = {
+  // Récupérer tous les quiz
+  getAllQuizzes: async () => {
+    try {
+      const response = await API.get('/quizzes');
+      return response.data;
+    } catch (error) {
+      throw new Error('Erreur lors du chargement des quiz');
+    }
+  },
+
   // Récupérer un quiz par ID
   getQuizById: async (id) => {
-    const response = await API.get(`/quiz/${id}`);
-    return response.data;
+    try {
+      const response = await API.get(`/quiz/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error('Erreur lors du chargement du quiz');
+    }
   },
-  
-  // Démarrer un quiz
-  startQuiz: async (quizId) => {
-    const response = await API.post(`/quiz/${quizId}/start`);
-    return response.data;
-  },
-  
+
   // Soumettre un quiz
-  submitQuiz: async (quizId, answers, startTime) => {
-    const response = await API.post(`/quiz/${quizId}/submit`, {
-      answers,
-      startTime,
-    });
-    return response.data;
+  submitQuiz: async (quizId, answers, timeSpent) => {
+    try {
+      const response = await API.post('/quiz/submit', {
+        quizId,
+        answers,
+        timeSpent
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error('Erreur lors de la soumission du quiz');
+    }
   },
-  
-  // Récupérer les résultats d'un quiz
-  getQuizResults: async (attemptId) => {
-    const response = await API.get(`/quiz/attempts/${attemptId}`);
-    return response.data;
-  },
-  
-  // Récupérer toutes les tentatives de l’utilisateur connecté
-  getUserAttempts: async () => {
-    const response = await API.get(`/quiz/attempts`);
-    return response.data;
+
+  // Récupérer les statistiques
+  getStats: async () => {
+    try {
+      const response = await API.get('/quiz/stats');
+      return response.data;
+    } catch (error) {
+      throw new Error('Erreur lors du chargement des statistiques');
+    }
   }
 };

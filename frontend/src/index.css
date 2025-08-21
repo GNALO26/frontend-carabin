@@ -15,7 +15,7 @@ body {
   min-height: 100vh;
 }
 
-/* Styles pour les champs de formulaire */
+/* Styles personnalisés */
 .input-field {
   @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300;
 }
@@ -24,44 +24,11 @@ body {
   @apply w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 disabled:opacity-50;
 }
 
-/* Animation d'entrée */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Correction du centrage */
-.min-h-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Styles pour les messages d'erreur */
-.error-message {
-  @apply bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6;
-}
-
-/* Styles pour le footer */
-.footer {
-  @apply mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-xs;
-}
-
-/* Navigation */
-.nav-link {
-  @apply text-gray-700 hover:text-blue-600 transition-colors duration-300;
-}
-
-.nav-link.active {
-  @apply text-blue-600 font-semibold;
-}
-
-/* Cards */
-.card {
-  @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
