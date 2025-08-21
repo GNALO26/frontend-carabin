@@ -1,4 +1,3 @@
-// ==================== HomePage.jsx ====================
 import React from "react";
 import { Link } from "react-router-dom";
 
@@ -11,8 +10,8 @@ const HomePage = () => {
             🩺 Bienvenue sur Carabin Quiz
           </h1>
           <p className="text-lg md:text-xl text-gray-700 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Testez vos connaissances médicales à travers des quiz interactifs et enrichissants. 
-            Connectez-vous pour suivre vos progrès et défiez vos amis !
+            Testez vos connaissances médicales à travers des quiz interactifs et enrichis. 
+            Connectez-vous pour suivre votre progression et défiez vos amis !
           </p>
           <div className="flex flex-col md:flex-row gap-6 justify-center">
             <Link
@@ -30,7 +29,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-
+      
       {/* Footer */}
       <footer className="mt-16 text-gray-600 text-sm">
         <p>© 2025 Quiz de Carabin. Tous droits réservés.</p>
@@ -40,4 +39,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
