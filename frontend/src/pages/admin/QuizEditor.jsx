@@ -1,27 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import API from "../../services/api";
+import React, { useState, useEffect } from "react";
+// Suppression de l'import navigate inutilisé
 
-const QuizEditor = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [quizData, setQuizData] = useState({
-    title: "",
-    description: "",
-    questions: [],
-    isPremium: false,
-    price: 0
-  });
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+const UsersPage = () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      fetchQuiz();
-    }
-  }, [id]);
+    const fetchUsers = async () => {
+      try {
+        const { data } = await API.get("/admin/users");
+        setUsers(data.users);
+      } catch (err) {
+        console.error("Erreur lors du chargement des utilisateurs");
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchUsers();
+  }, []);
   const fetchQuiz = async () => {
     setLoading(true);
     try {

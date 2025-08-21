@@ -1,32 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import API from '../../services/api';
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data } = await API.get("/admin/users");
+        setUsers(data.users);
+      } catch (err) {
+        console.error("Erreur lors du chargement des utilisateurs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUsers();
   }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await API.get('/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(response.data);
-    } catch (err) {
-      setError('Erreur lors du chargement des utilisateurs');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
