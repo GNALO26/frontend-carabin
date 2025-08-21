@@ -14,11 +14,11 @@ services:
 
   - type: web
     name: carabin-quiz-frontend
-    env: node   # ✅ passé en node
+    env: node
     branch: main
     rootDir: frontend
-    buildCommand: "npm install && npm run build"
-    startCommand: "npx serve -s build"   # ✅ sert ton build React
+    buildCommand: "npm install --force && npm run build"
+    startCommand: "npx serve -s build"
     envVars:
       - key: REACT_APP_API_URL
         value: https://carabin-quiz-backend.onrender.com/api
