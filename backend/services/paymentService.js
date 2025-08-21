@@ -1,5 +1,7 @@
 const axios = require('axios');
 const Payment = require('../models/Payment');
+const Subscription = require('../models/Subscription');
+const User = require('../models/User');
 const { sendAccessCode } = require('./emailService');
 
 const CINETPAY_API_KEY = process.env.CINETPAY_API_KEY;
@@ -23,15 +25,34 @@ async function verifyPayment({ transactionId, paymentId }) {
 
   if (status === 'ACCEPTED') {
     const code = generateAccessCode();
-    const expiry = new Date(Date.now() + 30*24*60*60*1000);
+    const expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
     payment.status = 'completed';
     payment.accessCode = code;
     payment.accessExpiry = expiry;
     await payment.save();
 
-    if (payment.email) {
-      await sendAccessCode(payment.email, code, expiry);
+    // Récupération de l’utilisateur par email
+    const user = await User.findOne({ email: payment.email });
+    if (!user) throw new Error("Utilisateur introuvable pour ce paiement");
+
+    // Création d’une souscription
+    await Subscription.create({
+      userId: user._id,
+      startDate: new Date(),
+      expiryDate: expiry,
+      accessCode: code
+    });
+
+    // Associer le paiement à l’utilisateur
+    user.payments.push(payment._id);
+    await user.save();
+
+    // Envoi du code d’accès par email
+    if (user.email) {
+      await sendAccessCode(user.email, code, expiry);
     }
+
     return { success: true, accessCode: code, expiryDate: expiry };
   } else {
     payment.status = 'failed';

@@ -7,11 +7,14 @@ const answerSchema = new mongoose.Schema({
     required: true
   },
   selectedOption: {
-    type: Number,
+    type: String, // ✅ permet d'accepter texte ou index
     required: true
   },
   isCorrect: Boolean,
-  timeTaken: Number // en secondes
+  timeTaken: {
+    type: Number,
+    default: 0 // en secondes
+  }
 });
 
 const resultSchema = new mongoose.Schema({
@@ -36,7 +39,6 @@ const resultSchema = new mongoose.Schema({
   },
   percentage: {
     type: Number,
-    required: true,
     min: 0,
     max: 100
   },
@@ -51,16 +53,21 @@ const resultSchema = new mongoose.Schema({
   answers: [answerSchema],
   passed: {
     type: Boolean,
-    required: true
+    default: false
   }
 }, {
   timestamps: true
 });
 
-// Calcul automatique du pourcentage
+// ✅ Calcul automatique du pourcentage (si pas déjà fourni par la route)
 resultSchema.pre('save', function(next) {
-  this.percentage = Math.round((this.score / this.totalQuestions) * 100);
-  this.passed = this.percentage >= 70;
+  if (this.totalQuestions > 0) {
+    this.percentage = Math.round((this.score / this.totalQuestions) * 100);
+  }
+  // si `passed` pas défini côté route → applique 70% par défaut
+  if (this.passed === undefined) {
+    this.passed = this.percentage >= 70;
+  }
   next();
 });
 

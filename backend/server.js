@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const fs = require('fs');
+const path = require("path");
 
 const authRoutes = require('./routes/authRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
@@ -29,17 +31,23 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/results', resultRoutes);
 
-const path = require("path");
-
-// Servir les fichiers du frontend
-app.use(express.static(path.join(__dirname, "public")));
-
-// ✅ Pour toutes les routes non-API → React
-app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// ✅ Nouvelle route : liste des quiz générés
+app.get("/api/quizzes", (req, res) => {
+  const dir = path.join(__dirname, "public");
+  const files = fs.readdirSync(dir).filter(f => f.endsWith(".html"));
+  res.json(files);
 });
 
-// Healthcheck (Render l’utilise pour savoir si ton app est en vie)
+// Servir les fichiers statiques (public + React build)
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../frontend/build")));
+
+// ✅ Toutes les routes non-API → React
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
+});
+
+// Healthcheck
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 // Middleware d’erreurs

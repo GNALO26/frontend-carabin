@@ -1,11 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import API from "../api";
 
 const DashboardPage = () => {
-  const fakeStats = {
-    quizzesDone: 5,
-    averageScore: 72,
-  };
+  const [stats, setStats] = useState({ quizzesDone: 0, averageScore: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data } = await API.get("/results/stats"); // ⚡ endpoint à créer côté backend
+        setStats(data);
+      } catch (err) {
+        console.error("Erreur stats:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) return <p className="text-center">Chargement...</p>;
 
   return (
     <div className="container mx-auto p-6">
@@ -14,19 +29,19 @@ const DashboardPage = () => {
         <div className="bg-white shadow rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-2">Quiz réalisés</h2>
           <p className="text-4xl font-bold text-blue-700">
-            {fakeStats.quizzesDone}
+            {stats.quizzesDone}
           </p>
         </div>
         <div className="bg-white shadow rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-2">Score moyen</h2>
           <p className="text-4xl font-bold text-yellow-500">
-            {fakeStats.averageScore}%
+            {stats.averageScore}%
           </p>
         </div>
       </div>
-      <div className="mt-10">
+      <div className="mt-10 text-center">
         <Link
-          to="/quiz/1"
+          to="/quizzes"
           className="px-6 py-3 bg-blue-700 text-white rounded-lg shadow hover:bg-blue-800 transition"
         >
           Faire un nouveau quiz

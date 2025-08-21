@@ -1,0 +1,182 @@
+PHYSIOLOGIE RÉNALE
+QCM
+Réponses justes
+Justification
+L’appareil juxta-glomérulaire comprend :
+Les cellules mésangiales intra glomérulaires
+Les podocytes
+Les cellules granulaires de l’artériole efférente
+La macula densa
+Les cellules mésangiales extra glomérulaires
+d et e
+Appareil juxta-glomérulaire=
+Macula densa +
+Cellules granulaires productrices de rénine de l’artériole afférente +
+Cellules mésangiales extra glomérulaires
+Les mécanismes mis en jeu pour corriger une diminution du volume liquide extracellulaire sont :
+Stimulation du système parasympathique
+Augmentation de l’excrétion urinaire de Sodium
+Diminution de la filtration glomérulaire
+Stimulation de la réabsorption tubulaire de Na+
+Une augmentation de la sécrétion d’ANP
+c, d et e
+a. Stimulation du système sympathique (Par ailleurs, pas d’innervation parasympathique au niveau du rein)
+b. Diminution de l’excrétion urinaire de Na+
+La réabsorption du sodium est stimulée par :
+Noradrénaline
+Dopamine
+ANP
+Angiotensine II
+Aldostérone
+a, d et e
+L’angiotensine II, l’aldostérone et la noradrénaline stimulent la réabsorption de Na+.
+L’ANP, la dopamine, les prostaglandines et la bradykinine l’inhibent.
+Les substances suivantes entraînent une constriction de l’artériole afférente
+Aldostérone
+Dopamine
+ANP
+Angiotensine II
+Noradrénaline
+a, d et e
+Les substances qui entraînent une constriction de l’artériole afférente sont celles qui diminuent la filtration glomérulaire.
+Notons que toutes les substances qui stimulent la réabsorption de NaCl vont diminuer la filtration glomérulaire.
+Les facteurs suivants stimulent la filtration glomérulaire :
+a. L’angiotensine II
+b. La dopamine
+c. La noradrénaline
+d. Le facteur atrial natriurétique
+d et e
+Les structures suivantes permettent la réabsorption du Sodium au niveau de l’anse de Henlé
+Cotransport Na+/Cl- de la membrane apicale
+Pompe Na+/K+ de la membrane apicale
+Échangeur Na+/H+ de la membrane apicale
+Cotransport Na+/K+/2Cl-
+Canal ENac
+c et d
+a. Intervient dans la réabsorption de Na+ au niveau de la partie initiale du tube distal
+b. Pompe Na+/K+ de la membrane basolatérale
+e. Intervient dans la réabsorption de Na+ au niveau de la partie terminale du tube distal et du tube collecteur (pôle apical des cellules principales)
+La clearance rénale des substances suivantes correspond au DFG (Débit de Filtration Glomérulaire)
+Glucose
+Acide para amino-hippurique
+Créatinine
+Inuline
+Urée
+d
+Clearance rénale d’une substance = DFG si ladite substance est librement filtrée, non secrétée, non réabsorbée (donc totalement excrétée) et non métabolisée par les reins
+a. Glucose normalement totalement réabsorbée par les reins
+b.  Excrétion incomplète (90% de la quantité administrée). Présente plutôt un intérêt dans la mesure du Débit Plasmatique rénal
+c. Légère sécrétion tubulaire de créatinine (10 à 20%)
+e. Substance réabsorbée et secrétée au niveau du tubule rénale
+Les structures suivantes permettent la création et l’entretien du gradient osmolaire cortico-médullaire
+Le rôle d’échangeur à contre-courant de l’Anse de Henlé
+Le rôle de multiplicateur à contre-courant des vasa-recta
+L’urée dans le cortex rénal
+La réabsorption de l’urée au niveau du tube collecteur
+Le rôle de segment de dilution de l’anse de Henlé
+d et e
+a. Rôle de multiplicateur à contre-courant de l’anse de Henlé
+b. Rôle d’échangeur à contre-courant des vasa-recta
+c. L’urée dans la médullaire interne
+Parmi les facteurs qui favorisent la l’excrétion rénale du K+ on note :
+L’augmentation du flux tubulaire
+[Cl-] luminal bas
+Exercice musculaire
+Insuline
+Hypokaliémie
+a, b, c et d
+e. Hyperkaliémie (De ce fait, toute situation entraînant une hyperkaliémie va augmenter l’excrétion rénale de K+)
+Concernant l'urée, quelle (s) est (sont) la (les) proposition (s) correcte (s) ?
+Il est librement filtré au niveau glomérulaire
+Il est plus sécrété que réabsorbé au niveau tubulaire
+L’excrétion urinaire varie en fonction des apports protidiques alimentaires
+L’excrétion urinaire est plus importante en restriction qu’en charge hydrique
+Sa clearance vaut environ la moitié de celle de l'inuline
+a et e
+b. Plus réabsorbé (120% de la quantité filtrée) que secrétée (60%)
+c. Excrétion urinaire varie en fonction du flux tubulaire
+d. Plutôt l’inverse : ↑ de l’excrétion urinaire d’urée avec ↑ du flux tubulaire. En restriction hydrique, ↓ du flux tubulaire donc ↓ de l’excrétion urinaire.
+La réabsorption tubulaire de l’urée :
+Se fait uniquement par des mécanismes paracellulaires au niveau du tube proximal
+Se fait par transport facilité au niveau de la branche ascendante de l’anse de Henlé
+S’effectue par diffusion au niveau de la branche ascendante de l’anse de Henlé
+S’effectue par des mécanismes transcellulaires au niveau du tube collecteur
+Augmente au niveau du tube collecteur en cas de sécrétion de vasopressine
+d et e
+a. Implication des mécanismes transcellulaires (Diffusion)
+b. et c. Pas de réabsorption de l’urée au niveau de l’anse de Henlé (Sécrétion)
+L’ADH
+N’agit pas toujours sur les récepteurs spécifiques
+Peut entraîner une vasoconstriction des vaisseaux
+Augmentation de la perméabilité à l'eau du tube contourné distal et du tube collecteur
+Diminue la concentration de l'urée dans le tube collecteur
+Son absence est à l'origine du diabète insipide néphrogénique
+b, c et d
+a. Il agit toujours sur des récepteurs spécifiques (V1 au niveau des vaisseaux et V2 au niveau du tube collecteur)
+e. Dans le diabète insipide néphrogénique, sécrétion d’ADH normale mais réponse du tube collecteur défectueuse
+Les structures de transport suivantes participent à la réabsorption des ions bicarbonates au niveau du tube proximal
+Le cotransport Na+/K+/2Cl-
+Le cotransport Na+/HCO3-
+L’échangeur Cl-/HCO3-
+Le cotransport Na+/Cl-
+L’antiport Na+/H+
+b, c et e
+A propos du transport tubulaire de potassium
+On a essentiellement des phénomènes de réabsorption
+La réabsorption au niveau du tube proximal est paracellulaire
+Les cellules intercalaires font une sécrétion tubulaire de potassium
+La quantité de potassium excrétée peut dépasser celle filtrée lorsque l’apport en potassium est élevé
+Une diminution du flux du liquide tubulaire entraine une augmentation de la sécrétion potassique
+a, b et d
+c. Plutôt une réabsorption. La sécrétion se fait au niveau des cellules principales
+e. La diminution du flux tubulaire entraîne plutôt une diminution de l’excrétion de K+ par diminution de sa sécrétion
+Concernant le transport tubulaire de calcium :
+La quantité filtrée est sécrétée à plus de 99%
+Le tube proximal réabsorbe environ 65% du calcium, essentiellement par voie transcellulaire
+La branche ascendante élargie de l’anse de Henlé sécrète environ 25% du calcium filtré
+La réabsorption transcellulaire au niveau des tubes distal et collecteur met en jeu des canaux calciques épithéliaux
+La calcitonine stimule la réabsorption tubulaire de potassium
+d
+a. La quantité filtrée est réabsorbée à plus de 99%
+b. La réabsorption au niveau du tub proximal se fait essentiellement par voie paracellulaire (80%)
+c. Pas de sécrétion de calcium au niveau du tubule rénale
+e. Stimulation de l’élimination rénale de calcium par la calcitonine
+Concernant le transport tubulaire de glucose
+On a essentiellement des phénomènes de réabsorption se produisant entièrement au niveau du tube distal
+On a essentiellement des phénomènes de réabsorption se produisant entièrement au niveau du tube proximal
+Au seuil rénal de glucose, le taux maximal de réabsorption du glucose est déjà atteint
+Il implique les transporteurs de glucose de type 1 et 2
+À glycémie normale, il n’y a pas de glycosurie
+b, d et e
+a. Tube proximal
+c. Au seuil rénal de glucose, TMG non encore atteint en raison de la saturation variable avec les néphrons et de la longueur du tube proximal variable d’un néphron à un autre
+En cas de déshydratation extracellulaire par diarrhées et vomissements, on observe les mécanismes de correction et les conséquences suivants :
+Une élaboration d’urines diluées
+Une augmentation de l’urémie
+La sécrétion de rénine
+Une diminution de la réabsorption tubulaire de sodium
+b et c
+a. Élaboration d’urines concentrées pour compenser les pertes d’eau
+d. Augmentation de la réabsorption tubulaire de sodium en réponse à la diminution du liquide extracellulaire
+. Dans l’acidose métabolique, on observe :
+a. une diminution du pH par augmentation de la PCO2
+b. une augmentation du pH par augmentation de [HCO3-]
+c. une diminution du pH par diminution de la [HCO3-]
+d. Une hyperkaliémie
+c et d
+pH fonction de la PCO2 et de [HCO3-] : pH et [HCO3-] variant dans les mêmes sens alors que PCO2 et pH varient dans des sens opposés
+Par ailleurs les désordres initiaux dans les anomalies du pH d’origine respiratoire portent essentiellement sur la PCO2 et celles d’origine métabolique portent sur [HCO3-]
+En réponse à une alcalose respiratoire on observe :
+a. Une diminution de la concentration intracellulaire du bicarbonate
+b. Une élimination d’urines plus acides
+c. Une augmentation de l’excrétion urinaire des bicarbonates
+d. Une augmentation de la PCO2
+a, b et c
+Les mécanismes de compensation en cas d’acidose ou d’alcalose respiratoire vont nécessiter d’agir sur la voie métabolique (↓ ou ↑ de [HCO3-]) et l’inverse en cas d’acidose ou d’alcalose métabolique.
+Concernant les diurétiques :
+a. Les diurétiques thiazidiques agissent sur le tube distal
+b. Les amilorides agissent sur les canaux épithéliaux sodiques
+c. Le furosémide est un diurétique agissant au niveau de la branche descendante de l’anse de Henlé
+d. L'acétazolamide est un diurétique qui agit par inhibition de l'anhydrase carbonique
+a, b et d
+c. Branche ascendante élargie de l’anse de Henlé
