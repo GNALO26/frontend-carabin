@@ -1,74 +1,106 @@
-// ==================== QuizzesPage.jsx ====================
-import React, { useState, useEffect } from "react";
-import API from "../api";
+// frontend/src/pages/QuizPage.jsx
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { QuizService } from "../services/quiz";
 
-const QuizzesPage = () => {
-  const [quizzes, setQuizzes] = useState([]);
+const QuizPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [quiz, setQuiz] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchQuizzes = async () => {
+    const fetchQuiz = async () => {
       try {
-        const { data } = await API.get("/quizzes");
-        setQuizzes(data);
+        const data = await QuizService.getQuizById(id);
+        setQuiz(data);
       } catch (err) {
-        setError("Erreur lors du chargement des quiz.");
-        console.error("Erreur:", err);
+        setError("Impossible de charger le quiz.");
       } finally {
         setLoading(false);
       }
     };
-    fetchQuizzes();
-  }, []);
+    fetchQuiz();
+  }, [id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  const handleAnswer = (option) => {
+    setAnswers({
+      ...answers,
+      [quiz.questions[currentQuestion]._id]: option,
+    });
+    setCurrentQuestion(currentQuestion + 1);
+  };
 
-  if (error) {
+  const handleSubmit = async () => {
+    try {
+      const res = await QuizService.submitQuiz(id, answers, Date.now());
+      setResult(res);
+    } catch (err) {
+      setError("Erreur lors de la soumission du quiz.");
+    }
+  };
+
+  if (loading) return <p>Chargement du quiz...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+
+  if (!quiz) return <p>Aucun quiz trouvé.</p>;
+
+  if (result) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow">
-          <p>{error}</p>
-        </div>
+      <div className="text-center bg-white shadow-lg rounded-xl p-8 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold text-blue-800 mb-4">Résultat 🎉</h1>
+        <p className="text-lg">
+          Score :{" "}
+          <span className="font-bold">{result.score}</span> /{" "}
+          {quiz.questions.length}
+        </p>
+        <button
+          onClick={() => navigate("/quizzes")}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Retour aux quiz
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-blue-800 mb-8 text-center">Quiz Disponibles</h1>
-
-        {quizzes.length === 0 ? (
-          <div className="bg-white p-6 rounded-lg shadow-md text-center">
-            <p className="text-gray-600">Aucun quiz disponible pour le moment.</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {quizzes.map((quiz) => (
-              <div
-                key={quiz._id}
-                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
+    <div className="container mx-auto p-6">
+      {currentQuestion < quiz.questions.length ? (
+        <div className="bg-white shadow-lg rounded-xl p-6 max-w-xl mx-auto">
+          <h1 className="text-xl font-bold mb-4">
+            {quiz.questions[currentQuestion].text}
+          </h1>
+          <div className="grid gap-3">
+            {quiz.questions[currentQuestion].options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => handleAnswer(opt)}
+                className="w-full bg-blue-100 text-blue-800 p-3 rounded-lg hover:bg-blue-200 transition"
               >
-                <h2 className="text-xl font-semibold text-blue-700 mb-3">{quiz.title}</h2>
-                <p className="text-gray-600 mb-4">{quiz.description}</p>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
-                  Commencer le quiz
-                </button>
-              </div>
+                {opt}
+              </button>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="text-center">
+          <p className="mb-4">Vous avez répondu à toutes les questions ✅</p>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            Soumettre mes réponses
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default QuizzesPage;
-
+export default QuizPage;

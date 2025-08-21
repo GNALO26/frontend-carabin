@@ -1,10 +1,13 @@
-// ==================== RegisterPage.jsx ====================
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState({ email: "", password: "", passwordConfirm: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    passwordConfirm: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -18,36 +21,45 @@ const RegisterPage = () => {
     e.preventDefault();
 
     if (formData.password !== formData.passwordConfirm) {
-      return setError("Les mots de passe ne correspondent pas");
+      setError("Les mots de passe ne correspondent pas");
+      return;
     }
+
     if (formData.password.length < 6) {
-      return setError("Le mot de passe doit contenir au moins 6 caractères");
+      setError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
     }
 
     try {
       setLoading(true);
+      setError("");
+
       const { data } = await API.post("/auth/register", {
         email: formData.email,
         password: formData.password,
       });
+
       localStorage.setItem("token", data.token);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.error || "Erreur lors de l'inscription. Veuillez réessayer.");
+      const errorMessage = err.response?.data?.error || "Erreur lors de l'inscription. Veuillez réessayer.";
+      setError(errorMessage);
+      console.error("Erreur d'inscription:", err.response?.data);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl animate-fade-in">
-        <h2 className="text-3xl font-bold text-center text-blue-800 mb-8">
-          Créer un compte
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl fade-in">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-blue-800 mb-2">Créer un compte</h1>
+          <p className="text-gray-600">Rejoignez Carabin Quiz pour tester vos connaissances médicales</p>
+        </div>
 
         {error && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6">
+          <div className="error-message">
             <p>{error}</p>
           </div>
         )}
@@ -61,7 +73,7 @@ const RegisterPage = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
+              className="input-field"
               placeholder="exemple@email.com"
             />
           </div>
@@ -74,7 +86,7 @@ const RegisterPage = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
+              className="input-field"
               placeholder="******** (min. 6 caractères)"
             />
           </div>
@@ -87,16 +99,24 @@ const RegisterPage = () => {
               value={formData.passwordConfirm}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
+              className="input-field"
+              placeholder=""
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition duration-300 disabled:opacity-50"
+            className="btn-primary"
           >
-            {loading ? "Création en cours..." : "Créer un compte"}
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                Création en cours...
+              </div>
+            ) : (
+              "Créer un compte"
+            )}
           </button>
         </form>
 
@@ -106,8 +126,8 @@ const RegisterPage = () => {
             Connectez-vous
           </Link>
         </p>
-
-        <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-xs">
+        
+        <footer className="footer">
           <p>© 2025 Quiz de Carabin. Tous droits réservés.</p>
         </footer>
       </div>
@@ -116,4 +136,3 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
-
