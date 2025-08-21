@@ -1,19 +1,25 @@
-// ✅ Quiz gratuit accessible à tous les utilisateurs connectés
-router.get('/free', authMiddleware, async (req, res) => {
-  try {
-    const quizzes = await Quiz.find({ free: true }, 'title description duration category difficulty');
-    res.json(quizzes);
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
+// backend/middlewares/checkSubscription.js
+const User = require("../models/User");
 
-// ✅ Quiz premium → seulement abonnés
-router.get('/premium', authMiddleware, checkSubscription, async (req, res) => {
+async function checkSubscription(req, res, next) {
   try {
-    const quizzes = await Quiz.find({ free: false }, 'title description duration category difficulty');
-    res.json(quizzes);
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur introuvable" });
+    }
+
+    const hasAccess = await user.hasPremiumAccess();
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: "Accès réservé aux abonnés premium" });
+    }
+
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
   }
-});
+}
+
+module.exports = checkSubscription;
