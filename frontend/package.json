@@ -37,15 +37,5 @@
   "devDependencies": {
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.21"
-  },
-    "eslintConfig": {
-  "extends": [
-    "react-app",
-    "react-app/jest"
-  ],
-  "rules": {
-    "react-hooks/exhaustive-deps": "warn",
-    "no-unused-vars": "warn"
   }
-}
 }
