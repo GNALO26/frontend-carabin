@@ -7,8 +7,8 @@ const Layout = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow container mx-auto p-4">
-        <Outlet />  {/* 🔥 Ici React Router injectera Home, Register, Login, etc. */}
+      <main className="flex-grow">
+        <Outlet />  {/* Les routes enfants seront injectées ici */}
       </main>
       <Footer />
     </div>
