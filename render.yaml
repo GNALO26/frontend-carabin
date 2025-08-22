@@ -17,7 +17,7 @@ services:
     env: node
     branch: main
     rootDir: frontend
-    buildCommand: "CI=false npm install && CI=false npm run build"
+    buildCommand: "CI=false npm install --unsafe-perm && CI=false npm run build"
     startCommand: "npx serve -s build"
     envVars:
       - key: REACT_APP_API_URL
