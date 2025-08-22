@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API from "../services/api";
+import API from "../services/api"; // on garde ton import existant
 import { useAuth } from "../contexts/AuthContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    passwordConfirm: ""
+    passwordConfirm: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,11 +22,11 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Vérification des mots de passe
     if (formData.password !== formData.passwordConfirm) {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
-
     if (formData.password.length < 6) {
       setError("Le mot de passe doit contenir au moins 6 caractères");
       return;
@@ -36,18 +36,26 @@ const RegisterPage = () => {
       setLoading(true);
       setError("");
 
+      // 🔹 Supprimer temporairement les tokens pour éviter les interférences
+      localStorage.removeItem("token");
+      localStorage.removeItem("adminToken");
+
+      // 🔹 Appel au backend
       const { data } = await API.post("/auth/register", {
         email: formData.email,
         password: formData.password,
       });
 
+      console.log("✅ Inscription réussie :", data);
+
+      // 🔹 Sauvegarder le token et connecter l'utilisateur
       localStorage.setItem("token", data.token);
       login(data.token, data.user);
       navigate("/dashboard");
     } catch (err) {
+      console.error("❌ Erreur d'inscription :", err.response?.data || err.message);
       const errorMessage = err.response?.data?.error || "Erreur lors de l'inscription. Veuillez réessayer.";
       setError(errorMessage);
-      console.error("Erreur d'inscription:", err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -103,7 +111,6 @@ const RegisterPage = () => {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
-              placeholder=""
             />
           </div>
 
