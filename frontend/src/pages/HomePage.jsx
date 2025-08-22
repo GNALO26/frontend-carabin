@@ -411,7 +411,8 @@ const HomePage = () => {
               <h4 className="text-lg font-semibold mb-4">Contact</h4>
               <ul className="space-y-2">
                 <li className="text-gray-400">quizdecarabin4@gmail.com</li>
-                <li className="text-gray-400">+229 XX XX XX XX</li>
+                <li className="text-gray-400">+229 01 57 17 41 09</li>
+                <li className="text-gray-400">+229 01 41 99 64 52</li>
               </ul>
             </div>
           </div>
