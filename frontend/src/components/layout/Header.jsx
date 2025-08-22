@@ -11,8 +11,6 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <svg className="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              </svg>
               <span className="text-2xl font-bold text-blue-800">🩺 Quiz de Carabin</span>
             </Link>
           </div>
