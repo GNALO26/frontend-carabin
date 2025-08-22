@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware de logging pour le débogage
 app.use((req, res, next) => {
-  console.log(${new Date().toISOString()} - ${req.method} ${req.path});
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   if (req.body && Object.keys(req.body).length > 0) {
     console.log('Request Body:', JSON.stringify(req.body, null, 2));
   }
@@ -91,6 +91,6 @@ app.use((err, req, res, next) => {
 // Démarrage du serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(🚀 Serveur démarré sur le port ${PORT});
-  console.log(🌐 Environment: ${process.env.NODE_ENV || 'development'});
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
