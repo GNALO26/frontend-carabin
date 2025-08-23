@@ -10,8 +10,8 @@ const QuizListPage = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const { data } = await API.get("/api/quiz");
-        setQuizzes(data); // ⚠️ adapte selon la réponse backend (si ton backend renvoie { quizzes: [...] }, laisse data.quizzes)
+        const { data } = await API.get("/quizzes");
+        setQuizzes(data.quizzes);
       } catch (err) {
         setError("Erreur lors du chargement des quiz");
         console.error(err);
