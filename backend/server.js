@@ -30,24 +30,27 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware de logging pour le débogage
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   if (req.body && Object.keys(req.body).length > 0) {
     console.log('Request Body:', JSON.stringify(req.body, null, 2));
   }
   next();
 });
 
-// Connexion MongoDB
+// Connexion à MongoDB avec meilleure gestion d'erreurs
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => {
   console.log('✅ MongoDB connected successfully');
+  // Vérifier que les collections existent
   mongoose.connection.db.listCollections().toArray((err, collections) => {
-    if (!err) {
-      console.log('📋 Collections disponibles:', collections.map(c => c.name));
+    if (err) {
+      console.error('❌ Error listing collections:', err);
+      return;
     }
+    console.log('📋 Collections disponibles:', collections.map(c => c.name));
   });
 })
 .catch(err => {
@@ -57,12 +60,12 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/quizzes", quizRoutes);  // ✅ corrigé (pluriel)
+app.use("/api/quizzes", quizRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/results", resultRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Healthcheck
+// Healthcheck amélioré
 app.get("/api/health", (req, res) => {
   res.json({ 
     message: "✅ API is running!",
@@ -85,7 +88,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Lancement serveur
+// Démarrage du serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);

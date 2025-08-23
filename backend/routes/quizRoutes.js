@@ -5,7 +5,7 @@ const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 const checkSubscription = require('../middlewares/checkSubscription');
 
-// ✅ Quiz en vedette
+// ✅ Route pour les quiz en vedette
 router.get('/featured', async (req, res) => {
   try {
     const quizzes = await Quiz.find({ free: true }).limit(3);
@@ -15,77 +15,93 @@ router.get('/featured', async (req, res) => {
   }
 });
 
-// ✅ Quiz gratuits
+// ✅ Quiz gratuit accessible à tous les utilisateurs connectés
 router.get('/free', authMiddleware, async (req, res) => {
   try {
     const quizzes = await Quiz.find(
       { free: true }, 
       'title description duration category difficulty'
     );
-    res.json({ quizzes });
+    res.json(quizzes);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ✅ Quiz premium (abonnés)
+// ✅ Quiz premium → seulement abonnés
 router.get('/premium', authMiddleware, checkSubscription, async (req, res) => {
   try {
     const quizzes = await Quiz.find(
       { free: false }, 
       'title description duration category difficulty'
     );
-    res.json({ quizzes });
+    res.json(quizzes);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ✅ Tous les quiz
+// Obtenir tous les quiz
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const quizzes = await Quiz.find({}, 'title description duration category difficulty free questions');
-    res.json({ quizzes });
+    const quizzes = await Quiz.find({}, 'title description duration category difficulty free');
+    res.json(quizzes);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ✅ Quiz par ID
+// Obtenir un quiz spécifique
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ error: 'Quiz non trouvé' });
+    if (!quiz) {
+      return res.status(404).json({ error: 'Quiz non trouvé' });
+    }
     res.json(quiz);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ✅ Démarrer un quiz
+// Commencer un quiz
 router.post('/:id/start', authMiddleware, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ error: 'Quiz non trouvé' });
+    if (!quiz) {
+      return res.status(404).json({ error: 'Quiz non trouvé' });
+    }
 
-    res.json({ quiz, startTime: new Date().toISOString() });
+    // Enregistrer le temps de début
+    const startTime = new Date();
+    
+    res.json({
+      quiz,
+      startTime: startTime.toISOString()
+    });
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ✅ Soumettre un quiz
+// Soumettre les réponses d'un quiz
 router.post('/:id/submit', authMiddleware, async (req, res) => {
   try {
     const { answers, startTime } = req.body;
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ error: 'Quiz non trouvé' });
+    
+    if (!quiz) {
+      return res.status(404).json({ error: 'Quiz non trouvé' });
+    }
 
+    // Calculer le score
     let score = 0;
     const results = answers.map((answer, index) => {
       const question = quiz.questions[index];
       const isCorrect = question.correctAnswers.includes(parseInt(answer.selectedOption));
+      
       if (isCorrect) score++;
+      
       return {
         questionId: question._id,
         selectedOption: answer.selectedOption,
@@ -94,6 +110,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       };
     });
 
+    // Créer le résultat
     const result = new Result({
       userId: req.user._id,
       quizId: quiz._id,
@@ -103,7 +120,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       startTime: new Date(startTime),
       endTime: new Date(),
       answers: results,
-      passed: score >= quiz.questions.length * 0.7
+      passed: score >= quiz.questions.length * 0.7 // 70% pour réussir
     });
 
     await result.save();
