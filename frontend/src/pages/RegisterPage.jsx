@@ -41,10 +41,11 @@ const RegisterPage = () => {
       localStorage.removeItem("adminToken");
 
       // 🔹 Appel au backend
-      const { data } = await API.post("/auth/register", {
+      const { data } = await API.post("/api/auth/register", {
         email: formData.email,
         password: formData.password,
       });
+
 
       console.log("✅ Inscription réussie :", data);
 
