@@ -16,7 +16,8 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'Utilisateur non trouvé.' });
     }
 
-    req.user = user;
+    req.user = user; // Définit l'utilisateur complet
+    req.userId = user._id; // Définit également l'ID de l'utilisateur pour compatibilité
     next();
   } catch (error) {
     res.status(401).json({ error: 'Token invalide.' });

@@ -9,7 +9,7 @@ router.post("/register", async (req, res) => {
   try {
     console.log("📥 Tentative d'inscription:", req.body);
     
-    const { name, email, password } = req.body; // Ajout du champ name
+    const { name, email, password } = req.body;
 
     // Validation des données
     if (!name || !email || !password) {
@@ -31,7 +31,7 @@ router.post("/register", async (req, res) => {
 
     // Créer l'utilisateur avec le nom
     const user = new User({
-      name, // Ajout du nom
+      name,
       email,
       password
     });
@@ -52,7 +52,7 @@ router.post("/register", async (req, res) => {
       token,
       user: { 
         id: user._id,
-        name: user.name, // Inclure le nom dans la réponse
+        name: user.name,
         email: user.email 
       },
       message: "Inscription réussie!"
@@ -109,7 +109,7 @@ router.post("/login", async (req, res) => {
       token,
       user: { 
         id: user._id,
-        name: user.name, // Inclure le nom dans la réponse
+        name: user.name,
         email: user.email,
         subscription: user.subscription
       },
@@ -124,7 +124,10 @@ router.post("/login", async (req, res) => {
 router.post("/validate-code", authMiddleware, async (req, res) => {
   try {
     const { code } = req.body;
+    
+    // Utilisation de req.user._id au lieu de req.userId
     const user = await User.findOne({
+      _id: req.user._id, // Correction ici
       "subscription.accessCode": code,
       "subscription.expiryDate": { $gt: new Date() },
     });
@@ -157,14 +160,13 @@ router.post("/validate-code", authMiddleware, async (req, res) => {
 // ===================== GET CURRENT USER =====================
 router.get("/me", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
-    if (!user) {
-      return res.status(404).json({ error: "Utilisateur introuvable" });
-    }
+    // Utilisation de req.user directement (déjà peuplé par le middleware)
+    const user = req.user;
+    
     res.json({ 
       user: {
         id: user._id,
-        name: user.name, // Inclure le nom dans la réponse
+        name: user.name,
         email: user.email,
         subscription: user.subscription
       }
