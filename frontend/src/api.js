@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Configuration de l'URL de base de l'API
+// Configuration de l'URL de base de l'API - AJOUT DU /api
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://carabin-quiz-backend.onrender.com/api';
 
 // Création de l'instance axios
@@ -17,7 +17,7 @@ API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-     config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

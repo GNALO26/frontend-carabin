@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API from "../services/api"; // on garde ton import existant
+import API from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
+    name: "", // AJOUT DU CHAMP NAME
     email: "",
     password: "",
     passwordConfirm: "",
@@ -36,20 +37,20 @@ const RegisterPage = () => {
       setLoading(true);
       setError("");
 
-      // 🔹 Supprimer temporairement les tokens pour éviter les interférences
+      // Supprimer temporairement les tokens pour éviter les interférences
       localStorage.removeItem("token");
       localStorage.removeItem("adminToken");
 
-      // 🔹 Appel au backend
-      const { data } = await API.post("/api/auth/register", {
+      // Appel au backend - AJOUT DU CHAMP NAME
+      const { data } = await API.post("/auth/register", {
+        name: formData.name, // AJOUTÉ
         email: formData.email,
         password: formData.password,
       });
 
-
       console.log("✅ Inscription réussie :", data);
 
-      // 🔹 Sauvegarder le token et connecter l'utilisateur
+      // Sauvegarder le token et connecter l'utilisateur
       localStorage.setItem("token", data.token);
       login(data.token, data.user);
       navigate("/dashboard");
@@ -77,6 +78,20 @@ const RegisterPage = () => {
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* AJOUT DU CHAMP NAME */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
+              placeholder="Votre nom complet"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Adresse e-mail</label>
             <input

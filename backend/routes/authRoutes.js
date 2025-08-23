@@ -9,12 +9,12 @@ router.post("/register", async (req, res) => {
   try {
     console.log("📥 Tentative d'inscription:", req.body);
     
-    const { email, password } = req.body;
+    const { name, email, password } = req.body; // Ajout du champ name
 
     // Validation des données
-    if (!email || !password) {
+    if (!name || !email || !password) {
       console.log("❌ Données manquantes");
-      return res.status(400).json({ error: "Email et mot de passe requis." });
+      return res.status(400).json({ error: "Nom, email et mot de passe requis." });
     }
 
     if (password.length < 6) {
@@ -29,8 +29,9 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Cet email est déjà utilisé." });
     }
 
-    // Créer l'utilisateur
+    // Créer l'utilisateur avec le nom
     const user = new User({
+      name, // Ajout du nom
       email,
       password
     });
@@ -50,7 +51,8 @@ router.post("/register", async (req, res) => {
     res.status(201).json({
       token,
       user: { 
-        id: user._id, 
+        id: user._id,
+        name: user.name, // Inclure le nom dans la réponse
         email: user.email 
       },
       message: "Inscription réussie!"
@@ -106,7 +108,8 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       user: { 
-        id: user._id, 
+        id: user._id,
+        name: user.name, // Inclure le nom dans la réponse
         email: user.email,
         subscription: user.subscription
       },
@@ -158,7 +161,14 @@ router.get("/me", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "Utilisateur introuvable" });
     }
-    res.json({ user });
+    res.json({ 
+      user: {
+        id: user._id,
+        name: user.name, // Inclure le nom dans la réponse
+        email: user.email,
+        subscription: user.subscription
+      }
+    });
   } catch (error) {
     console.error("💥 Erreur récupération utilisateur:", error);
     res.status(500).json({ error: "Erreur serveur" });
