@@ -74,8 +74,8 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Gestion des routes non trouvées
-app.use("*", (req, res) => {
+// Gestion des routes non trouvées (compatible Express 5)
+app.use("/*", (req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
