@@ -5,7 +5,7 @@ const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 const checkSubscription = require('../middlewares/checkSubscription');
 
-// ✅ Route pour les quiz en vedette (DOIT ÊTRE APRÈS l'initialisation du router)
+// ✅ Route pour les quiz en vedette
 router.get('/featured', async (req, res) => {
   try {
     const quizzes = await Quiz.find({ free: true }).limit(3);
@@ -19,7 +19,7 @@ router.get('/featured', async (req, res) => {
 router.get('/free', authMiddleware, async (req, res) => {
   try {
     const quizzes = await Quiz.find(
-      { free: true },
+      { free: true }, 
       'title description duration category difficulty'
     );
     res.json(quizzes);
@@ -32,7 +32,7 @@ router.get('/free', authMiddleware, async (req, res) => {
 router.get('/premium', authMiddleware, checkSubscription, async (req, res) => {
   try {
     const quizzes = await Quiz.find(
-      { free: false },
+      { free: false }, 
       'title description duration category difficulty'
     );
     res.json(quizzes);
@@ -41,7 +41,7 @@ router.get('/premium', authMiddleware, checkSubscription, async (req, res) => {
   }
 });
 
-// Obtenir tous les quiz (optionnel : mélange free + premium)
+// Obtenir tous les quiz
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const quizzes = await Quiz.find({}, 'title description duration category difficulty free');
@@ -72,10 +72,12 @@ router.post('/:id/start', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Quiz non trouvé' });
     }
 
+    // Enregistrer le temps de début
+    const startTime = new Date();
+    
     res.json({
-      quizId: quiz._id,
-      totalQuestions: quiz.questions.length,
-      startTime: new Date()
+      quiz,
+      startTime: startTime.toISOString()
     });
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -87,51 +89,42 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   try {
     const { answers, startTime } = req.body;
     const quiz = await Quiz.findById(req.params.id);
-
+    
     if (!quiz) {
       return res.status(404).json({ error: 'Quiz non trouvé' });
     }
 
+    // Calculer le score
     let score = 0;
-    const detailedAnswers = [];
-
-    quiz.questions.forEach((question, index) => {
-      const userAnswer = answers[index]?.selectedOption; // ✅ attend un objet {selectedOption, timeTaken}
-      const isCorrect = question.correctAnswer === userAnswer;
-
+    const results = answers.map((answer, index) => {
+      const question = quiz.questions[index];
+      const isCorrect = question.correctAnswers.includes(parseInt(answer.selectedOption));
+      
       if (isCorrect) score++;
-
-      detailedAnswers.push({
+      
+      return {
         questionId: question._id,
-        selectedOption: userAnswer,
+        selectedOption: answer.selectedOption,
         isCorrect,
-        timeTaken: answers[index]?.timeTaken || 0
-      });
+        timeTaken: answer.timeTaken || 0
+      };
     });
 
-    const percentage = (score / quiz.questions.length) * 100;
-    const passed = quiz.passMark ? percentage >= quiz.passMark : true;
-
+    // Créer le résultat
     const result = new Result({
       userId: req.user._id,
       quizId: quiz._id,
       score,
       totalQuestions: quiz.questions.length,
+      percentage: Math.round((score / quiz.questions.length) * 100),
       startTime: new Date(startTime),
       endTime: new Date(),
-      answers: detailedAnswers,
-      percentage,
-      passed
+      answers: results,
+      passed: score >= quiz.questions.length * 0.7 // 70% pour réussir
     });
 
     await result.save();
-
-    res.json({
-      score,
-      totalQuestions: quiz.questions.length,
-      percentage,
-      passed
-    });
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

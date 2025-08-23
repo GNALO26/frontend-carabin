@@ -20,7 +20,7 @@ router.get('/dashboard', async (req, res) => {
         .limit(5)
         .populate('userId', 'name email')
     };
-    
+
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -52,8 +52,8 @@ router.get('/quizzes/:id', async (req, res) => {
 router.put('/quizzes/:id', async (req, res) => {
   try {
     const updatedQuiz = await Quiz.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
+      req.params.id,
+      req.body,
       { new: true }
     );
     res.json(updatedQuiz);

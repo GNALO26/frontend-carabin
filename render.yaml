@@ -5,12 +5,18 @@ services:
     branch: main
     rootDir: backend
     buildCommand: "npm install"
-    startCommand: "npm start"
+    startCommand: "node server.js"
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGODB_URI
-        sync: false   # ⚠️ à définir dans le dashboard Render
+     - key: NODE_ENV
+       value: production
+     - key: MONGODB_URI
+       sync: false
+     - key: JWT_SECRET
+       sync: false
+     - key: CINETPAY_API_KEY
+       sync: false
+     - key: CINETPAY_SITE_ID
+       sync: false
 
   - type: web
     name: carabin-quiz-frontend

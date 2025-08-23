@@ -9,7 +9,7 @@ router.get('/user', authMiddleware, async (req, res) => {
     const results = await Result.find({ userId: req.user._id })
       .populate('quizId', 'title category')
       .sort({ createdAt: -1 });
-    
+
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -20,10 +20,10 @@ router.get('/user', authMiddleware, async (req, res) => {
 router.get('/quiz/:quizId', authMiddleware, async (req, res) => {
   try {
     const results = await Result.find({ 
-      userId: req.user._id,
-      quizId: req.params.quizId
+      userId: req.user._id, 
+      quizId: req.params.quizId 
     }).sort({ createdAt: -1 });
-    
+
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -41,12 +41,12 @@ router.get('/stats', authMiddleware, async (req, res) => {
           totalQuizzes: { $sum: 1 },
           averageScore: { $avg: "$percentage" },
           bestScore: { $max: "$percentage" },
-          passedCount: { $sum: { $cond: ["$passed", 1, 0] } }
-        }
+          passedCount: { $sum: { $cond: ["$passed", 1, 0] } } 
+        } 
       }
     ]);
-    
-    res.json(stats[0] || {});
+
+    res.json(stats[0] || { totalQuizzes: 0, averageScore: 0, bestScore: 0, passedCount: 0 });
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
