@@ -4,19 +4,17 @@ services:
     env: node
     branch: main
     rootDir: backend
-    buildCommand: "npm install"
+    buildCommand: "npm install && npm audit fix"
     startCommand: "node server.js"
     envVars:
-     - key: NODE_ENV
-       value: production
-     - key: MONGODB_URI
-       sync: false
-     - key: JWT_SECRET
-       sync: false
-     - key: CINETPAY_API_KEY
-       sync: false
-     - key: CINETPAY_SITE_ID
-       sync: false
+    - key: NODE_ENV
+      value: production
+    - key: MONGODB_URI
+      sync: false
+    - key: JWT_SECRET
+      sync: false
+    - key: PORT
+      value: 5000
 
   - type: web
     name: carabin-quiz-frontend
