@@ -17,7 +17,18 @@ const subscriptionSchema = new mongoose.Schema({
   accessCode: {
     type: String,
     required: true
+  },
+  status: {
+    type: String,
+    enum: ['active', 'expired', 'cancelled'],
+    default: 'active'
   }
+}, {
+  timestamps: true
 });
+
+// Index pour une recherche plus rapide
+subscriptionSchema.index({ userId: 1, status: 1 });
+subscriptionSchema.index({ expiryDate: 1 });
 
 module.exports = mongoose.model('Subscription', subscriptionSchema);

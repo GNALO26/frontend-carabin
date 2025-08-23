@@ -7,13 +7,22 @@ const questionSchema = new mongoose.Schema({
   },
   options: {
     type: [String],
-    required: true
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v.length >= 2;
+      },
+      message: 'Doit avoir au moins 2 options'
+    }
   },
   correctAnswer: {
     type: Number,
     required: true
   },
   explanation: {
+    type: String
+  },
+  imageUrl: {
     type: String
   }
 });

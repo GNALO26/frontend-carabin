@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
   email: {
     type: String,
     required: true,
@@ -20,10 +25,6 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
   subscription: {
     isActive: {
       type: Boolean,
@@ -33,22 +34,22 @@ const userSchema = new mongoose.Schema({
     accessCode: String,
     activatedAt: Date
   },
-  lastLogin: Date
+  lastLogin: Date,
+  payments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Payment'
+  }]
 }, {
   timestamps: true
 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
   
   try {
-    // Generate a salt
     const salt = await bcrypt.genSalt(12);
-    // Hash the password along with the new salt
     const hash = await bcrypt.hash(this.password, salt);
-    // Override the cleartext password with the hashed one
     this.password = hash;
     next();
   } catch (error) {
