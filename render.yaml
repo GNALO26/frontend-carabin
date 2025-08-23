@@ -1,19 +1,20 @@
 services:
   - type: web
     name: carabin-quiz-backend
-    env: docker
+    env: node
     branch: main
     rootDir: backend
-    dockerfilePath: Dockerfile
+    buildCommand: "rm -rf node_modules package-lock.json && npm install --force"
+    startCommand: "node server.js"
     envVars:
-    - key: NODE_ENV
-      value: production
-    - key: MONGODB_URI
-      sync: false
-    - key: JWT_SECRET
-      sync: false
-    - key: PORT
-      value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 5000
 
   - type: web
     name: carabin-quiz-frontend
