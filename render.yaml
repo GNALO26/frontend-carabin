@@ -4,19 +4,19 @@ services:
     env: node
     branch: main
     rootDir: backend
-    buildCommand: "rm -rf node_modules && npm install --no-audit --no-fund"
+    buildCommand: "rm -rf node_modules package-lock.json && npm install"
     startCommand: "node server.js"
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        value: mongodb+srv://quizadmin:O26077E@quizcarabincluster.ywzdytw.mongodb.net/carabinquiz?retryWrites=true&w=majority&appName=QuizCarabinCluster
+        sync: false
       - key: JWT_SECRET
-        value: fd4c4f54e34e7e07183606fe2d0467bbb9846133dfc2525f82568d201c87ee04
+        sync: false
       - key: PORT
         value: 5000
 
-  - type: static
+  - type: web
     name: carabin-quiz-frontend
     env: node
     branch: main
