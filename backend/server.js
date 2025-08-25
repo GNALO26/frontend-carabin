@@ -12,7 +12,7 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
-// Middleware CORS amélioré
+// Middleware CORS
 app.use(cors({
   origin: [
     'https://carabin-quiz.netlify.app',
@@ -37,21 +37,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Connexion à MongoDB avec meilleure gestion d'erreurs
+// Connexion à MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => {
   console.log('✅ MongoDB connected successfully');
-  // Vérifier que les collections existent
-  mongoose.connection.db.listCollections().toArray((err, collections) => {
-    if (err) {
-      console.error('❌ Error listing collections:', err);
-      return;
-    }
-    console.log('📋 Collections disponibles:', collections.map(c => c.name));
-  });
 })
 .catch(err => {
   console.error('❌ MongoDB connection error:', err);
@@ -65,9 +57,9 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/results", resultRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Healthcheck amélioré
+// Healthcheck
 app.get("/api/health", (req, res) => {
-  res.json({ 
+  res.json({
     message: "✅ API is running!",
     timestamp: new Date().toISOString(),
     database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
@@ -82,7 +74,7 @@ app.all("*", (req, res) => {
 // Gestionnaire d'erreurs global
 app.use((err, req, res, next) => {
   console.error("💥 Global error handler:", err);
-  res.status(500).json({ 
+  res.status(500).json({
     error: "Internal server error",
     message: process.env.NODE_ENV === "development" ? err.message : undefined
   });
