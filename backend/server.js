@@ -15,8 +15,8 @@ const app = express();
 // Middleware CORS amélioré
 app.use(cors({
   origin: [
-    'https://carabin-quiz.netlify.app',
-    'https://carabin-quiz-backend.onrender.com',
+    'https://carabin-quiz.netlify.app', // Votre frontend Netlify
+    'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app', // Votre backend Koyeb
     'http://localhost:3000',
     'http://localhost:5000'
   ],
@@ -38,10 +38,7 @@ app.use((req, res, next) => {
 });
 
 // Connexion à MongoDB avec meilleure gestion d'erreurs
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI)
 .then(() => {
   console.log('✅ MongoDB connected successfully');
   // Vérifier que les collections existent
