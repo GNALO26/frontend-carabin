@@ -2,47 +2,45 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const router = require("./router"); // ✅ importe le router
+const router = require("./router"); // centralisation routes
 
 const app = express();
 
-// Middleware CORS amélioré
+// Middleware CORS
 app.use(cors({
   origin: [
-    'https://carabin-quiz.netlify.app',
-    'https://carabin-quiz-backend.onrender.com',
-    'http://localhost:3000',
-    'http://localhost:5000'
+    "https://carabin-quiz.netlify.app",
+    "https://carabin-quiz-backend.onrender.com",
+    "http://localhost:3000",
+    "http://localhost:5000"
   ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.use(express.json({ limit: '10mb' }));
+// Middlewares parsing
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de logging
+// Logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+    console.log("Request Body:", JSON.stringify(req.body, null, 2));
   }
   next();
 });
 
-// Connexion MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
+// Connexion MongoDB (simplifiée sans options dépréciées)
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
 
-// ✅ Utilisation du router centralisé
+// Routes
 app.use("/api", router);
 
 // Healthcheck
@@ -72,5 +70,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || "development"}`);
 });
