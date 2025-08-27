@@ -11,7 +11,7 @@
 [build.environment]
   CI = "false"
   NODE_VERSION = "18"
-  REACT_APP_API_URL = "https://carabin-quiz-backend.onrender.com/api"
+  REACT_APP_API_URL = "https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app"
 
 
 [[headers]]
