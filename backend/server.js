@@ -2,13 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-
-// Import des routes
-const authRoutes = require("./routes/authRoutes");
-const quizRoutes = require("./routes/quizRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const resultRoutes = require("./routes/resultRoutes");
-const adminRoutes = require("./routes/adminRoutes");
+const router = require("./router"); // <-- Utilisation du nouveau fichier router.js
 
 const app = express();
 
@@ -37,33 +31,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Connexion à MongoDB avec meilleure gestion d'erreurs
+// Connexion à MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => {
   console.log('✅ MongoDB connected successfully');
-  // Vérifier que les collections existent
-  mongoose.connection.db.listCollections().toArray((err, collections) => {
-    if (err) {
-      console.error('❌ Error listing collections:', err);
-      return;
-    }
-    console.log('📋 Collections disponibles:', collections.map(c => c.name));
-  });
 })
 .catch(err => {
   console.error('❌ MongoDB connection error:', err);
   process.exit(1);
 });
 
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/quizzes", quizRoutes);
-app.use("/api/payment", paymentRoutes);
-app.use("/api/results", resultRoutes);
-app.use("/api/admin", adminRoutes);
+// Utilisation des routes centralisées
+app.use("/api", router);
 
 // Healthcheck amélioré
 app.get("/api/health", (req, res) => {
