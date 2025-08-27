@@ -16,7 +16,7 @@ const HomePage = () => {
 
     const fetchFeaturedQuizzes = async () => {
       try {
-        const { data } = await API.get("/quiz/featured");
+        const { data } = await API.get("/quizzes/featured");
         setFeaturedQuizzes(data.quizzes || []);
       } catch (error) {
         console.error("Erreur lors du chargement des quiz:", error);
