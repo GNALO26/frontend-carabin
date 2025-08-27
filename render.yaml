@@ -2,19 +2,12 @@ services:
   - type: web
     name: carabin-quiz-backend
     env: node
-    branch: main
-    rootDir: backend
     buildCommand: "npm install"
     startCommand: "node server.js"
     envVars:
       - key: NODE_ENV
         value: production
-      - key: MONGODB_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-
-  - type: web
+  - type: static
     name: carabin-quiz-frontend
     env: node
     branch: main
