@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const router = require("./apiRouter"); // Import du nouveau nom de fichier
+const router = require("./apiRouter");
 
 const app = express();
 
