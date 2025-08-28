@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const mammoth = require("mammoth");
 
-const inputFile = path.join(__dirname, "../uploads/PHYSIO. RÉNALE_104908.docx");
+const inputFile = path.join(__dirname, "../uploads/echange.docx");
 const debugFile = path.join(__dirname, "../debug-output.txt");
 
 (async () => {
