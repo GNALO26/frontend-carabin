@@ -14,9 +14,7 @@ const QuizListPage = () => {
         
         // Grouper les quizzes par catégorie
         const grouped = data.reduce((acc, quiz) => {
-          if (!acc[quiz.category]) {
-            acc[quiz.category] = [];
-          }
+          if (!acc[quiz.category]) acc[quiz.category] = [];
           acc[quiz.category].push(quiz);
           return acc;
         }, {});
@@ -41,6 +39,8 @@ const QuizListPage = () => {
       'tissu-cartilagineux': 'Tissu Cartilagineux',
       'tissu-osseux': 'Tissu Osseux',
       'physiologie-renale': 'Physiologie Rénale',
+      'physiologie-musculaire': 'Physiologie Musculaire',
+      'physiologie-respiratoire': 'Physiologie Respiratoire',
       'cardiologie': 'Cardiologie',
       'pharmacologie': 'Pharmacologie',
       'neurologie': 'Neurologie',
@@ -91,7 +91,7 @@ const QuizListPage = () => {
                       <p className="text-gray-600 mb-4 line-clamp-2">{quiz.description}</p>
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          {quiz.questions.length} questions
+                          {quiz.questions?.length || 0} questions
                         </span>
                         <span className={`text-sm px-2 py-1 rounded ${
                           quiz.free ? "bg-green-100 text-green-800" : "bg-purple-100 text-purple-800"
