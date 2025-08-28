@@ -1,3 +1,4 @@
+// backend/scripts/seedQuizzes.js
 const mongoose = require('mongoose');
 const Quiz = require('../models/Quiz');
 const fs = require('fs');
@@ -5,109 +6,86 @@ const path = require('path');
 const mammoth = require('mammoth');
 require('dotenv').config();
 
-// Connexion à MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connecté à MongoDB'))
-  .catch(err => {
-    console.error('❌ Erreur de connexion MongoDB', err);
-    process.exit(1);
-  });
-
-// Fonction pour scanner récursivement les dossiers
-function findDocxFiles(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    
-    if (stat.isDirectory()) {
-      findDocxFiles(filePath, fileList);
-    } else if (path.extname(file) === '.docx') {
-      fileList.push({
-        path: filePath,
-        category: path.basename(path.dirname(filePath)),
-        free: true
-      });
-    }
-  });
-  
-  return fileList;
-}
-
 // Fonction pour parser les fichiers DOCX
 async function parseDocxFile(filePath, category, isFree = true) {
   try {
     const { value } = await mammoth.extractRawText({ path: filePath });
-    const lines = value.split('\n').map(l => l.trim()).filter(Boolean);
+    const allText = value;
 
     const quizzes = [];
-    let currentQuiz = null;
-    let currentQuestion = null;
-    let inJustification = false;
+    let currentQuiz = {
+      title: '',
+      description: '',
+      category: category,
+      free: isFree,
+      questions: []
+    };
 
-    for (const line of lines) {
-      if (line.toLowerCase().includes('titre:')) {
-        if (currentQuiz) quizzes.push(currentQuiz);
-        currentQuiz = {
-          title: line.split(':').slice(1).join(':').trim(),
-          description: '',
-          category: category,
-          free: isFree,
-          questions: []
-        };
-        inJustification = false;
-      }
-      else if (line.toLowerCase().includes('description')) {
-        if (currentQuiz) {
-          currentQuiz.description = line.split(':').slice(1).join(':').trim();
-        }
-        inJustification = false;
-      }
-      else if (line.toLowerCase().includes('question')) {
-        if (currentQuiz) {
-          const questionText = line.split(':').slice(1).join(':').trim();
-          if (questionText) {
-            currentQuestion = {
-              text: questionText,
-              options: [],
-              correctAnswers: [],
-              explanation: ''
-            };
-            currentQuiz.questions.push(currentQuestion);
-          }
-        }
-        inJustification = false;
-      }
-      else if (/^[a-e][).\s]/i.test(line)) {
-        if (currentQuestion && !inJustification) {
-          const optionText = line.substring(2).trim();
-          if (optionText) {
-            currentQuestion.options.push(optionText);
-          }
-        }
-      }
-      else if (line.toLowerCase().includes('réponse:')) {
-        if (currentQuestion) {
-          const answerPart = line.split(':').slice(1).join(':').trim();
-          const answers = answerPart.split(',').map(a => a.trim().toLowerCase());
-          currentQuestion.correctAnswers = answers.map(a => 'abcde'.indexOf(a.charAt(0)));
-          inJustification = false;
-        }
-      }
-      else if (line.toLowerCase().includes('justification:')) {
-        if (currentQuestion) {
-          currentQuestion.explanation = line.split(':').slice(1).join(':').trim();
-          inJustification = true;
-        }
-      }
-      else if (inJustification && currentQuestion) {
-        currentQuestion.explanation += ' ' + line;
-      }
+    // Découper en blocs de questions (supporte "Q1", "Question 1", "QUESTION 1")
+    const questionBlocks = allText.split(/(?=(?:Question|Q)\s*\d+[:：]?)/i);
+
+    // Bloc d’entête (titre + description)
+    const firstBlock = questionBlocks[0] || "";
+
+    // Titre
+    const titleMatch = firstBlock.match(/Titre\s*[:：]?\s*(.+?)(?=\r?\n|Description|Question|$)/i);
+    if (titleMatch) {
+      currentQuiz.title = titleMatch[1].trim();
+    } else {
+      currentQuiz.title = path.basename(filePath, '.docx'); // fallback
     }
 
-    if (currentQuiz) quizzes.push(currentQuiz);
+    // Description
+    const descMatch = firstBlock.match(/Description\s*[:：]?\s*(.+?)(?=\r?\n|Question|$)/i);
+    if (descMatch) {
+      currentQuiz.description = descMatch[1].trim();
+    }
+
+    // Parcourir chaque question
+    for (let i = 1; i < questionBlocks.length; i++) {
+      const block = questionBlocks[i];
+
+      // Question (supporte "Q1:" ou "Question 1:")
+      const questionMatch = block.match(/(?:Question|Q)\s*\d+\s*[:：]?\s*(.+?)(?=a\)|b\)|c\)|d\)|e\)|Réponse|Justification|$)/is);
+      if (!questionMatch) {
+        console.warn(`⚠️ Question ignorée (mauvais format):\n${block.substring(0,80)}...`);
+        continue;
+      }
+      const questionText = questionMatch[1].trim();
+
+      // Options (supporte a), b), c)... même avec majuscules)
+      const options = [];
+      const optionRegex = /([a-eA-E])\)\s*(.+?)(?=[a-eA-E]\)|Réponse|Justification|$)/gis;
+      let optionMatch;
+      while ((optionMatch = optionRegex.exec(block)) !== null) {
+        options.push(optionMatch[2].trim());
+      }
+
+      // Réponses (supporte "Réponse", "Réponses", majuscules/minuscules)
+      const answerMatch = block.match(/Réponses?\s*[:：]?\s*([a-eA-E,\s]+)/i);
+      const answers = answerMatch
+        ? answerMatch[1].split(',').map(a => a.trim().toLowerCase())
+        : [];
+      const correctAnswers = answers
+        .map(a => 'abcde'.indexOf(a.charAt(0)))
+        .filter(i => i >= 0);
+
+      // Justification
+      const justificationMatch = block.match(/Justification\s*[:：]?\s*([\s\S]+?)(?=(?:Question|Q)\s*\d+[:：]?|$)/i);
+      const justification = justificationMatch ? justificationMatch[1].trim() : "";
+
+      // Ajouter la question
+      currentQuiz.questions.push({
+        text: questionText,
+        options: options,
+        correctAnswers: correctAnswers,
+        justification: justification
+      });
+    }
+
+    quizzes.push(currentQuiz);
     return quizzes;
+
   } catch (error) {
     console.error('❌ Erreur parsing DOCX:', error);
     return [];
@@ -117,32 +95,47 @@ async function parseDocxFile(filePath, category, isFree = true) {
 // Fonction principale
 async function seedFromDocx() {
   try {
+    const docxConfig = [
+      {
+        path: path.join(__dirname, '../uploads/physiologie-musculaire.docx'),
+        category: 'physiologie-musculaire',
+        free: false
+      },
+      {
+        path: path.join(__dirname, '../uploads/physiologie-respiratoire.docx'),
+        category: 'physiologie-respiratoire',
+        free: true
+      },
+      {
+        path: path.join(__dirname, '../uploads/physiologie-renale.docx'),
+        category: 'physiologie-renale',
+        free: true
+      }
+    ];
+
     console.log('🗑 Suppression des anciens quizzes...');
     await Quiz.deleteMany({});
     console.log('✅ Anciens quizzes supprimés');
 
-    // Trouver tous les fichiers DOCX
-    const uploadsDir = path.join(__dirname, '../uploads');
-    const docxFiles = findDocxFiles(uploadsDir);
-    
-    console.log(`📁 ${docxFiles.length} fichiers DOCX trouvés`);
-
     let totalQuizzes = 0;
     let totalQuestions = 0;
 
-    // Traiter chaque fichier
-    for (const config of docxFiles) {
+    for (const config of docxConfig) {
       if (fs.existsSync(config.path)) {
-        console.log(`\n📖 Lecture de ${path.basename(config.path)} (Catégorie: ${config.category})`);
+        console.log(`\n📖 Lecture de ${path.basename(config.path)}`);
+        console.log(`   Catégorie: ${config.category}`);
+        console.log(`   Statut: ${config.free ? 'GRATUIT' : 'PAYANT'}`);
+
         const quizzes = await parseDocxFile(config.path, config.category, config.free);
-        
+
         if (quizzes.length > 0) {
           await Quiz.insertMany(quizzes);
           console.log(`✅ ${quizzes.length} quizzes ajoutés`);
-          
+
           totalQuizzes += quizzes.length;
           quizzes.forEach(quiz => {
             totalQuestions += quiz.questions.length;
+            console.log(`   - "${quiz.title}" avec ${quiz.questions.length} questions`);
           });
         } else {
           console.log('❌ Aucun quiz trouvé dans ce fichier');
@@ -154,7 +147,7 @@ async function seedFromDocx() {
 
     console.log('\n🎉 Base de données peuplée avec succès!');
     console.log(`📊 ${totalQuizzes} quizzes et ${totalQuestions} questions ajoutés`);
-    
+
   } catch (error) {
     console.error('❌ Erreur:', error);
   } finally {
@@ -163,5 +156,13 @@ async function seedFromDocx() {
   }
 }
 
-// Exécution
-seedFromDocx();
+// Connexion MongoDB + lancement du seed
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('✅ Connecté à MongoDB');
+    return seedFromDocx();
+  })
+  .catch(err => {
+    console.error('❌ Erreur de connexion MongoDB', err);
+    process.exit(1);
+  });

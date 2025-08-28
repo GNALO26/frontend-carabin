@@ -30,6 +30,8 @@ const quizSchema = new mongoose.Schema({
       'cardiologie',
       'pharmacologie',
       'neurologie',
+      'physiologie-musculaire',
+      'physiologie-respiratoire',
       'anatomie'
     ], 
     default: 'physiologie-renale' 
