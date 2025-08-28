@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import API from "../api";
+import API from "../services/api";
 
 const QuizzesPage = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -10,11 +10,11 @@ const QuizzesPage = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const { data } = await API.get("/quizzes");
+        const { data } = await API.get("/quizzes/free"); // récupère uniquement les quiz gratuits
         setQuizzes(data);
       } catch (err) {
         setError("Erreur lors du chargement des quiz");
-        console.error("Erreur:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -53,7 +53,7 @@ const QuizzesPage = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             {quizzes.map((quiz) => (
-              <div key={quiz._id} className="card">
+              <div key={quiz._id} className="card bg-white p-4 rounded shadow-md">
                 <h2 className="text-xl font-semibold text-blue-700 mb-3">{quiz.title}</h2>
                 <p className="text-gray-600 mb-4">{quiz.description}</p>
                 <p className="text-sm text-gray-500 mb-4">{quiz.questions?.length || 0} questions</p>

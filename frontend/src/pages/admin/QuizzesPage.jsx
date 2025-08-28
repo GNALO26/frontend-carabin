@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../services/api';
 
-const QuizzesPage = () => {
+const AdminQuizzesPage = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,12 +15,12 @@ const QuizzesPage = () => {
   const fetchQuizzes = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await API.get('/admin/quizzes', {
+      const response = await API.get('/quizzes', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // ✅ Récupérer le tableau réel
-      setQuizzes(response.data.quizzes || []);
+      // Récupère le tableau de quiz
+      setQuizzes(response.data || []);
     } catch (err) {
       setError('Erreur lors du chargement des quiz');
       console.error(err);
@@ -32,7 +32,10 @@ const QuizzesPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce quiz ?')) {
       try {
-        await API.delete(`/admin/quizzes/${id}`);
+        const token = localStorage.getItem('adminToken');
+        await API.delete(`/quizzes/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setQuizzes(quizzes.filter(quiz => quiz._id !== id));
       } catch (err) {
         setError('Erreur lors de la suppression du quiz');
@@ -81,9 +84,6 @@ const QuizzesPage = () => {
                 Questions
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Prix
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -102,9 +102,6 @@ const QuizzesPage = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {quiz.questions?.length || 0}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {!quiz.free ? `${quiz.price || 0} FCFA` : 'Gratuit'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
@@ -135,4 +132,4 @@ const QuizzesPage = () => {
   );
 };
 
-export default QuizzesPage;
+export default AdminQuizzesPage;
