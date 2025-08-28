@@ -16,7 +16,7 @@ const DashboardPage = () => {
         }
 
         const { data } = await API.get("/results/stats", {
-          headers: { Authorization: `Bearer ${token}` }, // ✅ correction ici
+          headers: { Authorization: `Bearer ${token}` }, 
         });
         setStats(data);
       } catch (err) {

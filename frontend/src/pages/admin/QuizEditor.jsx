@@ -18,9 +18,13 @@ const QuizEditor = () => {
     if (!id) return;
     try {
       setLoading(true);
-      const { data } = await API.get(`/quizzes/${id}`);
+      const token = localStorage.getItem('adminToken');
+      const { data } = await API.get(`/admin/quizzes/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setQuiz(data);
     } catch (err) {
+      console.error(err);
       setError("Erreur lors du chargement du quiz");
     } finally {
       setLoading(false);
@@ -36,18 +40,30 @@ const QuizEditor = () => {
     setQuiz(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleQuestionChange = (index, value) => {
+    const newQuestions = [...quiz.questions];
+    newQuestions[index].text = value;
+    setQuiz(prev => ({ ...prev, questions: newQuestions }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError("");
     try {
+      const token = localStorage.getItem('adminToken');
       if (id) {
-        await API.put(`/quizzes/${id}`, quiz);
+        await API.put(`/admin/quizzes/${id}`, quiz, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
       } else {
-        await API.post("/quizzes", quiz);
+        await API.post("/admin/quizzes", quiz, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
       }
       navigate("/admin/quizzes");
     } catch (err) {
+      console.error(err);
       setError("Erreur lors de la sauvegarde du quiz");
     } finally {
       setSaving(false);
@@ -55,14 +71,20 @@ const QuizEditor = () => {
   };
 
   if (loading) {
-    return <div>Chargement...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">{id ? "Modifier" : "Créer"} un quiz</h1>
       
-      {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4">{error}</div>}
+      {error && (
+        <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4">{error}</div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -88,7 +110,24 @@ const QuizEditor = () => {
           />
         </div>
 
-        <div className="flex gap-2">
+        {quiz.questions?.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold mt-4">Questions</h2>
+            {quiz.questions.map((q, idx) => (
+              <div key={idx} className="border p-3 rounded">
+                <label className="block text-gray-700 mb-1">Question {idx + 1}</label>
+                <input
+                  type="text"
+                  value={q.text}
+                  onChange={(e) => handleQuestionChange(idx, e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 mt-6">
           <button
             type="button"
             onClick={() => navigate("/admin/quizzes")}

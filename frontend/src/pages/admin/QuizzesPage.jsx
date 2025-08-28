@@ -18,7 +18,9 @@ const QuizzesPage = () => {
       const response = await API.get('/admin/quizzes', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setQuizzes(response.data);
+
+      // ✅ Récupérer le tableau réel
+      setQuizzes(response.data.quizzes || []);
     } catch (err) {
       setError('Erreur lors du chargement des quiz');
       console.error(err);
@@ -94,15 +96,15 @@ const QuizzesPage = () => {
                   <div className="text-sm text-gray-500">{quiz.description}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${quiz.isPremium ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                    {quiz.isPremium ? 'Premium' : 'Gratuit'}
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${!quiz.free ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                    {!quiz.free ? 'Premium' : 'Gratuit'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {quiz.questions?.length || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {quiz.isPremium ? `${quiz.price} FCFA` : 'Gratuit'}
+                  {!quiz.free ? `${quiz.price || 0} FCFA` : 'Gratuit'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
