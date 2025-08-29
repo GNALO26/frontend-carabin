@@ -37,6 +37,19 @@ router.get('/premium', async (req, res) => {
     res.status(500).json({ error: 'Impossible de récupérer les quiz premium' });
   }
 });
+// Récupérer un quiz spécifique par ID
+router.get('/:id', async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) {
+      return res.status(404).json({ error: 'Quiz non trouvé' });
+    }
+    res.json(quiz);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Impossible de récupérer le quiz' });
+  }
+});
 
 // Récupérer les quiz par type (Gratuit / Premium)
 router.get('/by-type', authMiddleware, async (req, res) => {

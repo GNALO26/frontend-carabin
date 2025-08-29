@@ -5,7 +5,7 @@ import API from './services/api';
 
 // Pages publiques & utilisateurs
 import HomePage from './pages/HomePage.jsx';
-//import QuizPage from './pages/QuizPage.jsx';
+import QuizPage from './pages/QuizPage.jsx';
 import QuizListPage from './pages/QuizListPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
@@ -66,6 +66,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/quizzes" element={<QuizListPage />} />
+            <Route path="/quiz/:id" element={<QuizPage />} />
             <Route path="/generated/:fileName" element={<GeneratedQuizPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
