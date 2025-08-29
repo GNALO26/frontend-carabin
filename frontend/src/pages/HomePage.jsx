@@ -8,6 +8,23 @@ const HomePage = () => {
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
 
+  // Test de connexion API
+  useEffect(() => {
+    const testAPIConnection = async () => {
+      try {
+        console.log('Test de connexion à l\'API...');
+        const response = await API.get('/health');
+        console.log('✅ API connectée:', response.data);
+      } catch (error) {
+        console.error('❌ Erreur de connexion API:', error);
+        console.error('Détails:', error.response?.data || error.message);
+      }
+    };
+    
+    testAPIConnection();
+  }, []);
+
+  // Récupération des quiz
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -16,13 +33,22 @@ const HomePage = () => {
 
     const fetchFeaturedQuizzes = async () => {
       try {
+        console.log('Tentative de récupération des quizs...');
         const response = await API.get("/quizzes/featured");
-        console.log("Réponse API:", response.data); // Debug
-        setFeaturedQuizzes(response.data.quizzes || []);
+        console.log('Réponse API:', response.data);
+        
+        // Vérifiez la structure de la réponse
+        if (response.data && Array.isArray(response.data.quizzes)) {
+          setFeaturedQuizzes(response.data.quizzes);
+        } else if (Array.isArray(response.data)) {
+          // Si l'API retourne directement un tableau
+          setFeaturedQuizzes(response.data);
+        } else {
+          setError("Format de réponse inattendu de l'API");
+        }
       } catch (error) {
-        console.error("Erreur lors du chargement des quiz:", error);
+        console.error("Erreur complète:", error);
         setError("Impossible de charger les quiz. Veuillez réessayer.");
-        setFeaturedQuizzes([]);
       } finally {
         setLoading(false);
       }

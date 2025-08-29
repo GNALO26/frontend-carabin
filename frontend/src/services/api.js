@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// Configuration de l'URL de base de l'API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app/api';
 
 const API = axios.create({
@@ -13,15 +14,14 @@ const API = axios.create({
 // Intercepteur pour ajouter le token d'authentification aux requêtes
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Essayer d'abord le token admin, puis le token utilisateur normal
     const adminToken = localStorage.getItem('adminToken');
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    const userToken = localStorage.getItem('token');
     
     if (adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`;
+    } else if (userToken) {
+      config.headers.Authorization = `Bearer ${userToken}`;
     }
     
     return config;
@@ -36,9 +36,14 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('adminToken');
-      window.location.href = '/login';
+      // Redirection différente selon le type d'utilisateur
+      if (localStorage.getItem('adminToken')) {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin/login';
+      } else {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

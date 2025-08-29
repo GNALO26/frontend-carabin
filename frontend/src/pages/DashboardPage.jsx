@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import API from "../api";
+import API from "../services/api";
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({ quizzesDone: 0, averageScore: 0 });
