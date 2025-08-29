@@ -5,69 +5,15 @@ const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 const checkSubscription = require('../middlewares/checkSubscription');
 
-// Quiz en vedette (3 gratuits) - sans authentification
-router.get('/featured', async (req, res) => {
+// Récupérer les quiz par type (Gratuit / Premium)
+router.get('/by-type', authMiddleware, async (req, res) => {
   try {
-    const quizzes = await Quiz.find({ free: true }).limit(3);
-    res.json({ quizzes });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
+    const freeQuizzes = await Quiz.find({ free: true }, '_id title description duration category free questions');
+    const premiumQuizzes = await Quiz.find({ free: false }, '_id title description duration category free questions');
 
-// Quiz gratuits accessibles à tous - sans authentification
-router.get('/public', async (req, res) => {
-  try {
-    const quizzes = await Quiz.find({ free: true }, '_id title description duration category free questions');
-    res.json(quizzes);
+    res.json({ free: freeQuizzes, premium: premiumQuizzes });
   } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Quiz gratuits (avec auth)
-router.get('/free', authMiddleware, async (req, res) => {
-  try {
-    const quizzes = await Quiz.find({ free: true }, '_id title description duration category free');
-    res.json(quizzes);
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Quiz premium → abonnés
-router.get('/premium', authMiddleware, checkSubscription, async (req, res) => {
-  try {
-    const quizzes = await Quiz.find({ free: false }, '_id title description duration category free');
-    res.json(quizzes);
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Tous les quiz (avec auth)
-router.get('/', authMiddleware, async (req, res) => {
-  try {
-    const quizzes = await Quiz.find({}, '_id title description duration category free');
-    res.json(quizzes);
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Quiz spécifique
-router.get('/:id', authMiddleware, async (req, res) => {
-  try {
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ error: 'Quiz non trouvé' });
-    
-    // Vérifier si le quiz est premium et si l'utilisateur est abonné
-    if (!quiz.free && !req.user.isSubscribed) {
-      return res.status(403).json({ error: 'Abonnement requis pour accéder à ce quiz' });
-    }
-    
-    res.json(quiz);
-  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -78,7 +24,6 @@ router.post('/:id/start', authMiddleware, async (req, res) => {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) return res.status(404).json({ error: 'Quiz non trouvé' });
 
-    // Vérifier si le quiz est premium et si l'utilisateur est abonné
     if (!quiz.free && !req.user.isSubscribed) {
       return res.status(403).json({ error: 'Abonnement requis pour accéder à ce quiz' });
     }
@@ -102,7 +47,6 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       const question = quiz.questions[index];
       const isCorrect = question.correctAnswers.includes(parseInt(answer.selectedOption));
       if (isCorrect) score++;
-
       return {
         questionId: question._id,
         selectedOption: answer.selectedOption,
