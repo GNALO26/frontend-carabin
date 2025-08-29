@@ -96,17 +96,97 @@ const HomePage = () => {
                     <div className="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
                     <div className="w-3 h-3 rounded-full bg-green-400"></div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">Quiz d'anatomie</h3>
-                  <p className="mb-6">Quel est le plus grand organe du corps humain ?</p>
+                  <h3 className="text-xl font-semibold mb-4">Exemple de quiz</h3>
+                  <p className="mb-6">Découvrez nos quiz spécialisés pour étudiants en médecine</p>
                   <div className="space-y-3">
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">A. Le foie</div>
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">B. La peau</div>
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">C. L'intestin grêle</div>
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">D. Le poumon</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">A. Physiologie respiratoire</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">B. Physiologie rénale</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">C. Physiologie musculaire</div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">D. Cardiologie</div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Quizzes Section avec design de cartes moderne */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Quiz Populaires</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Découvrez les quiz les plus populaires parmi nos étudiants en médecine</p>
+          </div>
+          
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+              <p>{error}</p>
+            </div>
+          )}
+          
+          {loading ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredQuizzes.length > 0 ? (
+                featuredQuizzes.map((quiz) => (
+                  <div key={quiz._id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+                    <div className="h-40 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="p-6 flex flex-col flex-grow">
+                      <h3 className="text-xl font-semibold mb-2 text-gray-900">{quiz.title}</h3>
+                      <p className="text-gray-600 mb-4 flex-grow">{quiz.description}</p>
+                      <div className="flex justify-between items-center mt-auto">
+                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                          {quiz.questions?.length || 0} questions
+                        </span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          quiz.free ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {quiz.free ? 'Gratuit' : 'Premium'}
+                        </span>
+                      </div>
+                      <div className="mt-4">
+                        <Link 
+                          to={`/quiz/${quiz._id}`}
+                          className="w-full block text-center bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          Commencer
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-12">
+                  <div className="bg-white rounded-xl p-8 max-w-2xl mx-auto shadow-md">
+                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun quiz disponible pour le moment</h3>
+                    <p className="text-gray-600">Revenez bientôt pour découvrir nos nouveaux quiz!</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="text-center mt-12">
+            <Link
+              to="/quizzes"
+              className="inline-flex items-center px-6 py-3 bg-white text-blue-600 border border-blue-600 font-medium rounded-md hover:bg-blue-600 hover:text-white transition-colors"
+            >
+              Voir tous les quiz
+              <svg className="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
