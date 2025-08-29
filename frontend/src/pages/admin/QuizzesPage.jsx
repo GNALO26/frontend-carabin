@@ -15,7 +15,7 @@ const AdminQuizzesPage = () => {
   const fetchQuizzes = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await API.get('/quizzes', {
+      const response = await API.get('/quizzes/free', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
