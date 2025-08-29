@@ -10,11 +10,18 @@ const QuizListPage = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const { data } = await API.get("/quizzes/by-type"); // utilise le nouvel endpoint
-        setQuizzesByType(data); // data = { free: [...], premium: [...] }
+        const token = localStorage.getItem("token"); // Récupère le token si l'utilisateur est connecté
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const { data } = await API.get("/quizzes/by-type", { headers }); // Utilise l'endpoint correct
+        setQuizzesByType(data);
       } catch (err) {
-        setError("Erreur lors du chargement des quiz");
-        console.error(err);
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          setError("Veuillez vous connecter pour voir les quiz premium.");
+        } else {
+          setError("Erreur lors du chargement des quiz.");
+          console.error(err);
+        }
       } finally {
         setLoading(false);
       }
@@ -56,7 +63,7 @@ const QuizSection = ({ title, quizzes, badgeColor }) => {
                   {quiz.free ? "Gratuit" : "Premium"}
                 </span>
               </div>
-              <Link 
+              <Link
                 to={`/quiz/${quiz._id}`}
                 className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
               >

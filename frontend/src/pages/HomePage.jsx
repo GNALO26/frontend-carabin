@@ -3,44 +3,51 @@ import { Link } from "react-router-dom";
 import API from "../services/api";
 
 const HomePage = () => {
-  const [featuredQuizzes, setFeaturedQuizzes] = useState([]);
+  const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
 
-  // Test de connexion API
   useEffect(() => {
-  const fetchFeaturedQuizzes = async () => {
-    const token = localStorage.getItem("token");
-    if (token) setUser({ isLoggedIn: true });
+    const fetchQuizzes = async () => {
+      const token = localStorage.getItem("token");
+      if (token) setUser({ isLoggedIn: true });
 
-    try {
-      console.log("Tentative de récupération des quizs...");
-      const response = await API.get("/quizzes/featured");
-      console.log("Réponse API:", response.data);
+      try {
+        // Récupérer tous les quizs disponibles
+        const response = await API.get("/quizzes");
+        console.log("Réponse API:", response.data);
 
-      if (response.data && Array.isArray(response.data)) {
-        setFeaturedQuizzes(response.data);
-      } else {
-        setError("Format de réponse inattendu de l'API");
-        setFeaturedQuizzes([]);
+        if (response.data && Array.isArray(response.data)) {
+          // Filtrer pour n'afficher que les trois quizs existants
+          const existingQuizzes = response.data.filter(quiz => 
+            quiz.title.includes("Physiologie") || 
+            quiz.category === "physiologie-musculaire" ||
+            quiz.category === "physiologie-respiratoire" ||
+            quiz.category === "physiologie-renale"
+          );
+          
+          setQuizzes(existingQuizzes);
+        } else {
+          setError("Format de réponse inattendu de l'API");
+          setQuizzes([]);
+        }
+      } catch (err) {
+        console.error("Erreur complète:", err);
+        console.error("Détails de l'erreur:", err.response?.data || err.message);
+        setError("Impossible de charger les quiz. Veuillez réessayer.");
+        setQuizzes([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Erreur complète:", err);
-      console.error("Détails de l'erreur:", err.response?.data || err.message);
-      setError("Impossible de charger les quiz. Veuillez réessayer.");
-      setFeaturedQuizzes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchFeaturedQuizzes();
+    fetchQuizzes();
   }, []);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Hero Section */}
+      {/* Hero Section - inchangée */}
       <section className="relative py-16 md:py-24 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center">
@@ -96,8 +103,8 @@ const HomePage = () => {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Quiz Populaires</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Découvrez les quiz les plus populaires parmi nos étudiants en médecine</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Nos Quizs Disponibles</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Découvrez les quizs spécialisés pour les étudiants en médecine</p>
           </div>
 
           {error && (
@@ -112,8 +119,8 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredQuizzes.length > 0 ? (
-                featuredQuizzes.map((quiz) => (
+              {quizzes.length > 0 ? (
+                quizzes.map((quiz) => (
                   <div key={quiz._id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
                     <div className="h-40 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
                       <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,101 +201,101 @@ const HomePage = () => {
       </section>
 
       {/* Pricing Section */}
-<section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center mb-12">
-      <h2 className="text-3xl font-bold text-gray-900 mb-4">Abonnez-vous pour plus de fonctionnalités</h2>
-      <p className="text-lg text-gray-600 max-w-3xl mx-auto">Accédez à tous nos quiz et fonctionnalités avancées</p>
-    </div>
-
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden md:flex">
-        {/* Left part */}
-        <div className="md:w-2/3 p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Abonnement Premium</h3>
-          <p className="text-gray-600 mb-6">Tout ce dont vous avez besoin pour exceller dans vos études médicales</p>
-
-          <div className="flex items-end mb-6">
-            <span className="text-4xl font-bold text-blue-600">5 000 FCFA</span>
-            <span className="text-gray-500 ml-2">/ mois</span>
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Abonnez-vous pour plus de fonctionnalités</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Accédez à tous nos quiz et fonctionnalités avancées</p>
           </div>
 
-          <ul className="space-y-3 mb-8">
-            {[
-              "Accès à tous les quiz spécialisés",
-              "Statistiques détaillées de progression",
-              "Certificats de réussite",
-              "Défis exclusifs",
-              "Support prioritaire",
-            ].map((item, index) => (
-              <li key={index} className="flex items-center">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden md:flex">
+              {/* Left part */}
+              <div className="md:w-2/3 p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Abonnement Premium</h3>
+                <p className="text-gray-600 mb-6">Tout ce dont vous avez besoin pour exceller dans vos études médicales</p>
+
+                <div className="flex items-end mb-6">
+                  <span className="text-4xl font-bold text-blue-600">5 000 FCFA</span>
+                  <span className="text-gray-500 ml-2">/ mois</span>
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "Accès à tous les quiz spécialisés",
+                    "Statistiques détaillées de progression",
+                    "Certificats de réussite",
+                    "Défis exclusifs",
+                    "Support prioritaire",
+                  ].map((item, index) => (
+                    <li key={index} className="flex items-center">
+                      <svg
+                        className="h-5 w-5 text-green-500 mr-2"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  to="/payment"
+                  className="block w-full bg-blue-600 text-white text-center py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  S'abonner maintenant
+                </Link>
+              </div>
+
+              {/* Right part */}
+              <div className="md:w-1/3 bg-blue-600 text-white p-8 flex flex-col justify-center text-center">
                 <svg
-                  className="h-5 w-5 text-green-500 mr-2"
+                  className="w-16 h-16 mx-auto mb-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
                 >
                   <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                   />
                 </svg>
-                {item}
-              </li>
-            ))}
-          </ul>
+                <h4 className="text-xl font-bold mb-2">Premium Exclusive</h4>
+                <p className="text-blue-100">
+                  Rejoignez des milliers d'étudiants qui améliorent leurs connaissances médicales avec notre abonnement premium.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      {/* CTA Section */}
+      <section className="py-16 bg-blue-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-6">Prêt à tester vos connaissances ?</h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            Rejoignez la communauté Quiz de Carabin dès aujourd'hui
+          </p>
           <Link
-            to="/payment"
-            className="block w-full bg-blue-600 text-white text-center py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            to="/register"
+            className="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300"
           >
-            S'abonner maintenant
+            Créer un compte gratuit
           </Link>
         </div>
-
-        {/* Right part */}
-        <div className="md:w-1/3 bg-blue-600 text-white p-8 flex flex-col justify-center text-center">
-          <svg
-            className="w-16 h-16 mx-auto mb-4 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-            />
-          </svg>
-          <h4 className="text-xl font-bold mb-2">Premium Exclusive</h4>
-          <p className="text-blue-100">
-            Rejoignez des milliers d'étudiants qui améliorent leurs connaissances médicales avec notre abonnement premium.
-          </p>
-        </div>
-      </div>
+      </section>
     </div>
-  </div>
-</section>
-
-{/* CTA Section */}
-<section className="py-16 bg-blue-600 text-white">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <h2 className="text-3xl font-bold mb-6">Prêt à tester vos connaissances ?</h2>
-    <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-      Rejoignez la communauté Quiz de Carabin dès aujourd'hui
-    </p>
-    <Link
-      to="/register"
-      className="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300"
-    >
-      Créer un compte gratuit
-    </Link>
-  </div>
-</section>
-</div>
   );
 };
 

@@ -5,15 +5,36 @@ const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 const checkSubscription = require('../middlewares/checkSubscription');
 
-// --- Nouvelle route : quiz "featured" ---
-router.get('/featured', async (req, res) => {
+// Récupérer tous les quizs
+router.get('/', async (req, res) => {
   try {
-    // Récupère les 6 derniers quiz (tu peux ajuster la logique)
-    const featuredQuizzes = await Quiz.find().sort({ createdAt: -1 }).limit(6);
-    res.json(featuredQuizzes);
+    const quizzes = await Quiz.find();
+    res.json(quizzes);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Impossible de récupérer les quiz' });
+  }
+});
+
+// Récupérer les quizs gratuits
+router.get('/free', async (req, res) => {
+  try {
+    const freeQuizzes = await Quiz.find({ free: true });
+    res.json(freeQuizzes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Impossible de récupérer les quiz gratuits' });
+  }
+});
+
+// Récupérer les quizs premium
+router.get('/premium', async (req, res) => {
+  try {
+    const premiumQuizzes = await Quiz.find({ free: false });
+    res.json(premiumQuizzes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Impossible de récupérer les quiz premium' });
   }
 });
 
@@ -22,7 +43,6 @@ router.get('/by-type', authMiddleware, async (req, res) => {
   try {
     const freeQuizzes = await Quiz.find({ free: true }, '_id title description duration category free questions');
     const premiumQuizzes = await Quiz.find({ free: false }, '_id title description duration category free questions');
-
     res.json({ free: freeQuizzes, premium: premiumQuizzes });
   } catch (error) {
     console.error(error);
@@ -59,11 +79,11 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       const question = quiz.questions[index];
       const isCorrect = question.correctAnswers.includes(parseInt(answer.selectedOption));
       if (isCorrect) score++;
-      return {
-        questionId: question._id,
-        selectedOption: answer.selectedOption,
-        isCorrect,
-        timeTaken: answer.timeTaken || 0
+      return { 
+        questionId: question._id, 
+        selectedOption: answer.selectedOption, 
+        isCorrect, 
+        timeTaken: answer.timeTaken || 0 
       };
     });
 
