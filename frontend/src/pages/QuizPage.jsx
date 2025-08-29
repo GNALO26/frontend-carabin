@@ -10,7 +10,7 @@ const QuizzesPage = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const { data } = await API.get("/quizzes");
+        const { data } = await API.get("/quizzes/free");
         setQuizzes(data);
       } catch (err) {
         setError("Erreur lors du chargement des quiz");
