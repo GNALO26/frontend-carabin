@@ -5,6 +5,18 @@ const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 const checkSubscription = require('../middlewares/checkSubscription');
 
+// --- Nouvelle route : quiz "featured" ---
+router.get('/featured', async (req, res) => {
+  try {
+    // Récupère les 6 derniers quiz (tu peux ajuster la logique)
+    const featuredQuizzes = await Quiz.find().sort({ createdAt: -1 }).limit(6);
+    res.json(featuredQuizzes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Impossible de récupérer les quiz' });
+  }
+});
+
 // Récupérer les quiz par type (Gratuit / Premium)
 router.get('/by-type', authMiddleware, async (req, res) => {
   try {

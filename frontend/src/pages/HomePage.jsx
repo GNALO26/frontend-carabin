@@ -10,45 +10,33 @@ const HomePage = () => {
 
   // Test de connexion API
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) setUser({ isLoggedIn: true });
-
   const fetchFeaturedQuizzes = async () => {
-    setLoading(true);
-    setError("");
+    const token = localStorage.getItem("token");
+    if (token) setUser({ isLoggedIn: true });
 
     try {
       console.log("Tentative de récupération des quizs...");
       const response = await API.get("/quizzes/featured");
+      console.log("Réponse API:", response.data);
 
-      // Debug complet pour vérifier exactement ce que renvoie l'API
-      console.log("Réponse brute API:", response);
-      console.log("Réponse.data API:", response.data);
-
-      // Gestion sécurisée selon le format
-      if (response.data) {
-        if (Array.isArray(response.data)) {
-          setFeaturedQuizzes(response.data);
-        } else if (Array.isArray(response.data.quizzes)) {
-          setFeaturedQuizzes(response.data.quizzes);
-        } else {
-          console.warn("Format inattendu de l'API:", response.data);
-          setError("Format de réponse inattendu de l'API");
-        }
+      if (response.data && Array.isArray(response.data)) {
+        setFeaturedQuizzes(response.data);
       } else {
-        setError("Aucune donnée reçue de l'API");
+        setError("Format de réponse inattendu de l'API");
+        setFeaturedQuizzes([]);
       }
     } catch (err) {
       console.error("Erreur complète:", err);
       console.error("Détails de l'erreur:", err.response?.data || err.message);
       setError("Impossible de charger les quiz. Veuillez réessayer.");
+      setFeaturedQuizzes([]);
     } finally {
       setLoading(false);
     }
   };
 
   fetchFeaturedQuizzes();
-}, []);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
