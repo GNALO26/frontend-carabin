@@ -30,7 +30,7 @@ const PaymentPage = () => {
         return;
       }
 
-      const { data } = await API.post("/payment/initiate", {
+      const { data } = await API.post("/api/payment/initiate", {
         amount,
         description: "Abonnement Quiz de Carabin Premium",
         phone

@@ -21,7 +21,7 @@ const PaymentSuccess = () => {
       }
 
       try {
-        const { data } = await API.post("/payment/verify", {
+        const { data } = await API.post("/api/payment/verify", {
           transactionId
         });
 
