@@ -20,20 +20,25 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  // Champs d'abonnement unifiés
+  isSubscribed: {
+    type: Boolean,
+    default: false
+  },
+  subscriptionStart: {
+    type: Date,
+    default: null
+  },
+  subscriptionEnd: {
+    type: Date,
+    default: null
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
   },
-  subscription: {
-    isActive: {
-      type: Boolean,
-      default: false
-    },
-    expiryDate: Date,
-    accessCode: String,
-    activatedAt: Date
-  },
+  // Suppression de l'objet subscription dupliqué
   lastLogin: Date,
   payments: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -66,18 +71,18 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   }
 };
 
-// Check if user has premium access
-userSchema.methods.hasPremiumAccess = function() {
-  return this.subscription.isActive && 
-         this.subscription.expiryDate && 
-         this.subscription.expiryDate > new Date();
+// Vérifier si l'utilisateur a un abonnement actif
+userSchema.methods.hasActiveSubscription = function() {
+  return this.isSubscribed && 
+         this.subscriptionEnd && 
+         new Date() < this.subscriptionEnd;
 };
 
-// Virtual for subscription status
+// Virtual pour le statut de l'abonnement
 userSchema.virtual('subscriptionStatus').get(function() {
-  if (this.subscription.isActive && this.subscription.expiryDate > new Date()) {
+  if (this.isSubscribed && this.subscriptionEnd && new Date() < this.subscriptionEnd) {
     return 'active';
-  } else if (this.subscription.isActive && this.subscription.expiryDate <= new Date()) {
+  } else if (this.isSubscribed && this.subscriptionEnd && this.subscriptionEnd <= new Date()) {
     return 'expired';
   } else {
     return 'inactive';

@@ -1,132 +1,80 @@
 const axios = require('axios');
-const Payment = require('../models/Payment');
-const Subscription = require('../models/Subscription');
-const User = require('../models/User');
-const { sendAccessCode } = require('./emailService'); // À décommenter si disponible
+const { v4: uuidv4 } = require('uuid');
 
 const CINETPAY_API_KEY = process.env.CINETPAY_API_KEY;
 const CINETPAY_SITE_ID = process.env.CINETPAY_SITE_ID;
 const CINETPAY_BASE_URL = 'https://api-checkout.cinetpay.com/v2';
 
-function generateAccessCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-async function initiatePayment(paymentData) {
+// Fonction pour initier un paiement
+const initiatePayment = async (paymentData) => {
   try {
-    const { amount, description, userId, email } = paymentData;
-    const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Enregistrer le paiement en attente
-    const payment = new Payment({
-      userId,
-      email,
-      amount,
-      transactionId,
-      paymentId: `pay_${transactionId}`,
-      operator: 'OM', // Par défaut
-      phoneNumber: '000000000', // À remplacer par les données réelles
-      status: 'pending'
-    });
-    
-    await payment.save();
+    const transaction_id = uuidv4();
 
-    // Initier le paiement avec CinetPay
-    const response = await axios.post(`${CINETPAY_BASE_URL}/payment`, {
+    const payload = {
       apikey: CINETPAY_API_KEY,
       site_id: CINETPAY_SITE_ID,
-      transaction_id: transactionId,
-      amount: amount,
-      currency: 'XOF',
-      description: description,
-      customer_id: userId.toString(),
-      customer_name: email,
-      customer_email: email,
-      return_url: `${process.env.FRONTEND_URL}/payment-success`,
-      notify_url: `${process.env.API_URL}/api/payment/notify`,
-      channels: 'ALL'
-    });
-
-    return {
-      ...response.data,
-      paymentId: payment._id,
-      transactionId: transactionId
+      transaction_id: transaction_id,
+      amount: paymentData.amount,
+      currency: paymentData.currency || 'XOF',
+      description: paymentData.description || 'Abonnement Quiz de Carabin',
+      customer_id: paymentData.userId,
+      customer_name: paymentData.customer_name || 'Client Quiz de Carabin',
+      customer_email: paymentData.email,
+      customer_phone_number: paymentData.phone || '',
+      return_url: `${process.env.APP_URL}/payment-success`,
+      notify_url: `${process.env.API_BASE_URL}/api/payment/notify`,
+      channels: 'ALL',
+      metadata: JSON.stringify({ userId: paymentData.userId })
     };
+
+    const response = await axios.post(`${CINETPAY_BASE_URL}/payment/init, payload`);
+
+    if (response.data.code === '201') {
+      return {
+        payment_id: response.data.data.payment_id,
+        transaction_id: transaction_id,
+        payment_url: response.data.data.payment_url
+      };
+    } else {
+      throw new Error(response.data.message || 'Erreur lors de l\'initialisation du paiement');
+    }
   } catch (error) {
     console.error('Payment initiation error:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Erreur lors de l\'initialisation du paiement');
   }
-}
+};
 
-async function verifyPayment(transactionId, paymentId) {
+// Fonction pour vérifier un paiement
+const verifyPayment = async (transactionId) => {
   try {
-    // Vérifier le statut auprès de CinetPay
-    const response = await axios.post(`${CINETPAY_BASE_URL}/payment/check`, {
+    const payload = {
       apikey: CINETPAY_API_KEY,
       site_id: CINETPAY_SITE_ID,
       transaction_id: transactionId
-    });
+    };
 
-    const status = response?.data?.data?.status;
-    const payment = await Payment.findById(paymentId);
-    
-    if (!payment) {
-      throw new Error('Paiement introuvable');
-    }
+    const response = await axios.post(`${CINETPAY_BASE_URL}/payment/check, payload`);
 
-    if (status === 'ACCEPTED') {
-      const code = generateAccessCode();
-      const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours
-
-      // Mettre à jour le statut du paiement
-      payment.status = 'completed';
-      payment.accessCode = code;
-      payment.accessExpiry = expiryDate;
-      await payment.save();
-
-      // Mettre à jour l'utilisateur
-      const user = await User.findById(payment.userId);
-      if (user) {
-        user.subscription.isActive = true;
-        user.subscription.expiryDate = expiryDate;
-        user.subscription.accessCode = code;
-        user.subscription.activatedAt = new Date();
-        user.payments.push(payment._id);
-        await user.save();
-
-        // Créer un enregistrement d'abonnement
-        await Subscription.create({
-          userId: user._id,
-          startDate: new Date(),
-          expiryDate: expiryDate,
-          accessCode: code,
-          status: 'active'
-        });
-
-        // Envoyer l'email avec le code d'accès (à décommenter si disponible)
-         if (user.email) {
-           await sendAccessCode(user.email, code, expiryDate);
-         }
-      }
-
-      return { 
-        success: true, 
-        status: 'completed',
-        accessCode: code, 
-        expiryDate: expiryDate 
+    if (response.data.code === '00') {
+      return {
+        status: 'ACCEPTED',
+        message: 'Paiement effectué avec succès',
+        data: response.data.data
       };
     } else {
-      payment.status = 'failed';
-      await payment.save();
-      return { 
-        success: false, 
-        status: status || 'failed' 
+      return {
+        status: 'REJECTED',
+        message: response.data.message,
+        data: response.data.data
       };
     }
   } catch (error) {
     console.error('Payment verification error:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Erreur lors de la vérification du paiement');
   }
-}
+};
 
-module.exports = { initiatePayment, verifyPayment };
+module.exports = {
+  initiatePayment,
+  verifyPayment
+};

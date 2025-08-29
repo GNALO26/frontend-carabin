@@ -13,7 +13,11 @@ const checkSubscription = async (req, res, next) => {
       return res.status(404).json({ error: "Utilisateur introuvable" });
     }
 
-    if (!user.hasPremiumAccess()) {
+    // Vérifier si l'utilisateur a un abonnement actif
+    const hasActiveSubscription = user.isSubscribed && 
+                                 new Date() < new Date(user.subscriptionEnd);
+
+    if (!hasActiveSubscription) {
       return res.status(403).json({ 
         error: "Accès réservé aux abonnés premium",
         message: "Vous devez souscrire à un abonnement pour accéder à ce contenu"
