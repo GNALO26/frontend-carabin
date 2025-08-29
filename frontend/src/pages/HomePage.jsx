@@ -10,46 +10,45 @@ const HomePage = () => {
 
   // Test de connexion API
   useEffect(() => {
-    const testAPIConnection = async () => {
-      try {
-        console.log("Test de connexion à l'API...");
-        const response = await API.get("/health");
-        console.log("✅ API connectée:", response.data);
-      } catch (err) {
-        console.error("❌ Erreur de connexion API:", err.response?.data || err.message);
-      }
-    };
-    testAPIConnection();
-  }, []);
+  const token = localStorage.getItem("token");
+  if (token) setUser({ isLoggedIn: true });
 
-  // Récupération des quiz
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) setUser({ isLoggedIn: true });
+  const fetchFeaturedQuizzes = async () => {
+    setLoading(true);
+    setError("");
 
-    const fetchFeaturedQuizzes = async () => {
-      try {
-        console.log("Tentative de récupération des quizs...");
-        const response = await API.get("/quizzes/featured");
-        console.log("Réponse API:", response.data);
+    try {
+      console.log("Tentative de récupération des quizs...");
+      const response = await API.get("/quizzes/featured");
 
-        if (response.data && Array.isArray(response.data.quizzes)) {
-          setFeaturedQuizzes(response.data.quizzes);
-        } else if (Array.isArray(response.data)) {
+      // Debug complet pour vérifier exactement ce que renvoie l'API
+      console.log("Réponse brute API:", response);
+      console.log("Réponse.data API:", response.data);
+
+      // Gestion sécurisée selon le format
+      if (response.data) {
+        if (Array.isArray(response.data)) {
           setFeaturedQuizzes(response.data);
+        } else if (Array.isArray(response.data.quizzes)) {
+          setFeaturedQuizzes(response.data.quizzes);
         } else {
+          console.warn("Format inattendu de l'API:", response.data);
           setError("Format de réponse inattendu de l'API");
         }
-      } catch (err) {
-        console.error("Erreur complète:", err.response?.data || err.message);
-        setError("Impossible de charger les quiz. Veuillez réessayer.");
-      } finally {
-        setLoading(false);
+      } else {
+        setError("Aucune donnée reçue de l'API");
       }
-    };
+    } catch (err) {
+      console.error("Erreur complète:", err);
+      console.error("Détails de l'erreur:", err.response?.data || err.message);
+      setError("Impossible de charger les quiz. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchFeaturedQuizzes();
-  }, []);
+  fetchFeaturedQuizzes();
+}, []);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
