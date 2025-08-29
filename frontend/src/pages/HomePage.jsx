@@ -3,40 +3,52 @@ import { Link } from "react-router-dom";
 import API from "../services/api";
 
 const HomePage = () => {
-  const [quizzes, setQuizzes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [user, setUser] = useState(null);
+  // Dans HomePage.jsx, remplacez la fonction fetchQuizzes par :
+const fetchQuizzes = async () => {
+  const token = localStorage.getItem("token");
+  if (token) setUser({ isLoggedIn: true });
 
-  useEffect(() => {
-  const fetchQuizzes = async () => {
-    const token = localStorage.getItem("token");
-    if (token) setUser({ isLoggedIn: true });
-
-    try {
-      console.log("Tentative de récupération des quizs...");
-      const response = await API.get("/quizzes");
-      console.log("Réponse API:", response.data);
-
-      if (response.data && Array.isArray(response.data)) {
-        // Afficher tous les quizs sans filtre
-        setQuizzes(response.data);
-      } else {
-        setError("Format de réponse inattendu de l'API");
-        setQuizzes([]);
+  try {
+    // Utilisez les données statiques de vos vrais quizs
+    const staticQuizzes = [
+      {
+        _id: "68b157bbbd92d0ac18107912",
+        title: "Physiologie de la contraction musculaire",
+        description: "QCM sur la contraction musculaire",
+        duration: 30,
+        questions: Array(10).fill({}),
+        category: "physiologie-musculaire",
+        free: false
+      },
+      {
+        _id: "68b157bbbd92d0ac1810791e",
+        title: "Physiologie respiratoire",
+        description: "QCM sur la respiration",
+        duration: 30,
+        questions: Array(10).fill({}),
+        category: "physiologie-respiratoire",
+        free: true
+      },
+      {
+        _id: "68b157bcbd92d0ac1810792a",
+        title: "Physiologie rénale",
+        description: "QCM sur la fonction rénale",
+        duration: 30,
+        questions: Array(10).fill({}),
+        category: "physiologie-renale",
+        free: true
       }
-    } catch (err) {
-      console.error("Erreur complète:", err);
-      console.error("Détails de l'erreur:", err.response?.data || err.message);
-      setError("Impossible de charger les quiz. Veuillez réessayer.");
-      setQuizzes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchQuizzes();
-  }, []);
+    ];
+    
+    setQuizzes(staticQuizzes);
+  } catch (err) {
+    console.error("Erreur:", err);
+    setError("Impossible de charger les quiz. Veuillez réessayer.");
+    setQuizzes([]);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Hero Section - inchangée */}
