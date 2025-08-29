@@ -15,6 +15,16 @@ router.get('/featured', async (req, res) => {
   }
 });
 
+// Quiz gratuits accessibles à tous
+router.get('/public', async (req, res) => {
+  try {
+    const quizzes = await Quiz.find({ free: true }, 'title description duration category free');
+    res.json(quizzes);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Quiz gratuits
 router.get('/free', authMiddleware, async (req, res) => {
   try {
