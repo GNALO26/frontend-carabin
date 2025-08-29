@@ -57,7 +57,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api", quizRoutes);
+app.use("/api/quizzes", quizRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/results", resultRoutes);
 app.use("/api/admin", adminRoutes);
