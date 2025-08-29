@@ -9,33 +9,36 @@ const HomePage = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-  const fetchQuizzes = async () => {
-    const token = localStorage.getItem("token");
-    if (token) setUser({ isLoggedIn: true });
+    const fetchQuizzes = async () => {
+      const token = localStorage.getItem("token");
+      if (token) setUser({ isLoggedIn: true });
 
-    try {
-      console.log("Tentative de récupération des quizs...");
-      const response = await API.get("/api/quizzes");
-      console.log("Réponse API:", response.data);
+      try {
+        console.log("Tentative de récupération des quizs...");
+        const response = await API.get("/quizzes");
+        console.log("Réponse API:", response.data);
 
-      if (response.data && Array.isArray(response.data)) {
-        // Afficher tous les quizs sans filtre
-        setQuizzes(response.data);
-      } else {
-        setError("Format de réponse inattendu de l'API");
+        if (response.data && Array.isArray(response.data)) {
+          setQuizzes(response.data);
+        } else {
+          setError("Format de réponse inattendu de l'API");
+          setQuizzes([]);
+        }
+      } catch (err) {
+        console.error("Erreur complète:", err);
+        
+        // Gestion d'erreur améliorée
+        const errorDetails = err.response?.data || err.message || "Erreur inconnue";
+        console.error("Détails de l'erreur:", errorDetails);
+        
+        setError("Impossible de charger les quiz. Veuillez réessayer.");
         setQuizzes([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Erreur complète:", err);
-      console.error("Détails de l'erreur:", err.response?.data || err.message);
-      setError("Impossible de charger les quiz. Veuillez réessayer.");
-      setQuizzes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchQuizzes();
+    fetchQuizzes();
   }, []);
   return (
     <div className="min-h-screen bg-white flex flex-col">

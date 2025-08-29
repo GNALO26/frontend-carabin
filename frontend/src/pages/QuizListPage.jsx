@@ -13,7 +13,7 @@ const QuizListPage = () => {
         const token = localStorage.getItem("token"); // Récupère le token si l'utilisateur est connecté
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const { data } = await API.get("/api/quizzes/by-type", { headers }); // Utilise l'endpoint correct
+        const { data } = await API.get("/quizzes/by-type", { headers }); // Utilise l'endpoint correct
         setQuizzesByType(data);
       } catch (err) {
         if (err.response?.status === 401 || err.response?.status === 403) {

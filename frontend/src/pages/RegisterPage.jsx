@@ -42,7 +42,7 @@ const RegisterPage = () => {
       localStorage.removeItem("adminToken");
 
       // Appel au backend - AJOUT DU CHAMP NAME
-      const { data } = await API.post("/api/auth/register", {
+      const { data } = await API.post("/auth/register", {
         name: formData.name, // AJOUTÉ
         email: formData.email,
         password: formData.password,

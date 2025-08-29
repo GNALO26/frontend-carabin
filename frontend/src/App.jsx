@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import API from './services/api';
 
 // Pages publiques & utilisateurs
 import HomePage from './pages/HomePage.jsx';
@@ -29,6 +30,34 @@ import PrivateRoute from './components/auth/PrivateRoute.jsx';
 import AdminRoute from './components/auth/AdminRoute.jsx';
 
 function App() {
+  const [backendStatus, setBackendStatus] = useState('loading'); // 'loading', 'healthy', 'error'
+
+  useEffect(() => {
+    const checkBackendHealth = async () => {
+      try {
+        await API.get('/health');
+        setBackendStatus('healthy');
+      } catch (error) {
+        console.error('Le backend est indisponible:', error);
+        setBackendStatus('error');
+      }
+    };
+
+    checkBackendHealth();
+  }, []);
+
+  // Si le backend est en erreur, afficher un message
+  if (backendStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Service temporairement indisponible</h1>
+          <p className="text-gray-600">Veuillez réessayer dans quelques instants.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AuthProvider>
       <Router>
