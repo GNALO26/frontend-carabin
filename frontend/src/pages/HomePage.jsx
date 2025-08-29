@@ -14,19 +14,16 @@ const HomePage = () => {
       if (token) setUser({ isLoggedIn: true });
 
       try {
-        // Récupérer tous les quizs disponibles
-        const response = await API.get("/quizzes");
+        const response = await API.get("/quizzes"); // <-- correspond au server.js
         console.log("Réponse API:", response.data);
 
         if (response.data && Array.isArray(response.data)) {
-          // Filtrer pour n'afficher que les trois quizs existants
           const existingQuizzes = response.data.filter(quiz => 
             quiz.title.includes("Physiologie") || 
             quiz.category === "physiologie-musculaire" ||
             quiz.category === "physiologie-respiratoire" ||
             quiz.category === "physiologie-renale"
           );
-          
           setQuizzes(existingQuizzes);
         } else {
           setError("Format de réponse inattendu de l'API");

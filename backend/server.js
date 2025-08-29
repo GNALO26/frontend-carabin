@@ -4,19 +4,15 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 
 // Import des routes
-const authRoutes = require("./routes/authRoutes");
 const quizRoutes = require("./routes/quizRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const resultRoutes = require("./routes/resultRoutes");
-const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
-// Middleware CORS amélioré
+// Middleware CORS
 app.use(cors({
   origin: [
-    'https://carabin-quiz.netlify.app', // Votre frontend Netlify
-    'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app', // Votre backend Koyeb
+    'https://carabin-quiz.netlify.app',
+    'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app',
     'http://localhost:3000',
     'http://localhost:5000'
   ],
@@ -28,7 +24,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de logging pour le débogage
+// Middleware de logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   if (req.body && Object.keys(req.body).length > 0) {
@@ -37,16 +33,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Connexion à MongoDB avec meilleure gestion d'erreurs
+// Connexion MongoDB
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => {
   console.log('✅ MongoDB connected successfully');
-  // Vérifier que les collections existent
   mongoose.connection.db.listCollections().toArray((err, collections) => {
-    if (err) {
-      console.error('❌ Error listing collections:', err);
-      return;
-    }
+    if (err) return console.error('❌ Error listing collections:', err);
     console.log('📋 Collections disponibles:', collections.map(c => c.name));
   });
 })
@@ -56,13 +48,9 @@ mongoose.connect(process.env.MONGODB_URI)
 });
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api", quizRoutes);
-app.use("/api/payment", paymentRoutes);
-app.use("/api/results", resultRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/quizzes", quizRoutes); // <-- IMPORTANT: correspond au frontend
 
-// Healthcheck amélioré
+// Healthcheck
 app.get("/api/health", (req, res) => {
   res.json({ 
     message: "✅ API is running!",
@@ -85,7 +73,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Démarrage du serveur
+// Démarrage serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
