@@ -5,8 +5,8 @@ import API from "../services/api";
 const HomePage = () => {
   const [featuredQuizzes, setFeaturedQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [user, setUser] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -16,10 +16,12 @@ const HomePage = () => {
 
     const fetchFeaturedQuizzes = async () => {
       try {
-        const { data } = await API.get("/quizzes/featured");
-        setFeaturedQuizzes(data.quizzes || []);
+        const response = await API.get("/quizzes/featured");
+        console.log("Réponse API:", response.data); // Debug
+        setFeaturedQuizzes(response.data.quizzes || []);
       } catch (error) {
         console.error("Erreur lors du chargement des quiz:", error);
+        setError("Impossible de charger les quiz. Veuillez réessayer.");
         setFeaturedQuizzes([]);
       } finally {
         setLoading(false);
