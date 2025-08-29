@@ -54,7 +54,21 @@ mongoose.connect(process.env.MONGODB_URI)
   console.error('❌ MongoDB connection error:', err);
   process.exit(1);
 });
-
+// Endpoint racine de l'API
+app.get("/api", (req, res) => {
+  res.json({ 
+    message: "✅ API Quiz de Carabin est opérationnelle!", 
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: "/api/auth",
+      quizzes: "/api/quizzes",
+      payment: "/api/payment",
+      results: "/api/results",
+      admin: "/api/admin"
+    },
+    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
+  });
+});
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizRoutes);

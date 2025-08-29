@@ -3,7 +3,7 @@ import axios from 'axios';
 // Configuration de l'URL de base de l'API
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
-  'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app/api';
+  'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app';
 
 const API = axios.create({
   baseURL: API_BASE_URL,
