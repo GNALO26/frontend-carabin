@@ -5,21 +5,21 @@ const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 const checkSubscription = require('../middlewares/checkSubscription');
 
-// Quiz en vedette (3 gratuits)
-router.get('/featured', async (req, res) => {
+// Quiz gratuits accessibles à tous (sans auth)
+router.get('/public', async (req, res) => {
   try {
-    const quizzes = await Quiz.find({ free: true }).limit(3);
-    res.json({ quizzes });
+    const quizzes = await Quiz.find({ free: true }, '_id title description duration category free');
+    res.json(quizzes);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// Quiz gratuits accessibles à tous
-router.get('/public', async (req, res) => {
+// Quiz en vedette (3 gratuits) - sans auth
+router.get('/featured', async (req, res) => {
   try {
-    const quizzes = await Quiz.find({ free: true }, 'title description duration category free');
-    res.json(quizzes);
+    const quizzes = await Quiz.find({ free: true }, '_id title description duration category free').limit(3);
+    res.json({ quizzes });
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
