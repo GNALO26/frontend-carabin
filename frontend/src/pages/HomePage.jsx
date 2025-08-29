@@ -15,7 +15,7 @@ const HomePage = () => {
 
     try {
       console.log("Tentative de récupération des quizs...");
-      const response = await API.get("/quizzes");
+      const response = await API.get("/api/quizzes");
       console.log("Réponse API:", response.data);
 
       if (response.data && Array.isArray(response.data)) {
