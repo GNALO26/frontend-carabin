@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import API from "../services/api";
-import { useAuth } from "../context/AuthContext"; // Chemin corrigé
 
 const PaymentPage = () => {
   const [amount] = useState(5000);
@@ -9,7 +9,7 @@ const PaymentPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { user, refreshUserData } = useAuth(); // Utilisez user et refreshUserData
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -27,11 +27,36 @@ const PaymentPage = () => {
         return;
       }
 
-      // Appel API pour CinetPay
+      // Formater le numéro de téléphone pour CinetPay
+      const formatPhoneNumber = (phone) => {
+        const cleaned = phone.replace(/\D/g, '');
+        
+        // Si le numéro commence par 229, le retourner tel quel
+        if (cleaned.startsWith('229')) {
+          return cleaned;
+        }
+        
+        // Si le numéro a 10 chiffres et commence par 0, ajouter l'indicatif 229
+        if (cleaned.length === 10 && cleaned.startsWith('0')) {
+          return '229' + cleaned.substring(1);
+        }
+        
+        // Si le numéro a 9 chiffres (sans le 0), ajouter l'indicatif 229
+        if (cleaned.length === 9) {
+          return '229' + cleaned;
+        }
+        
+        // Retourner le numéro original si le format n'est pas reconnu
+        return cleaned;
+      };
+
+      const formattedPhone = formatPhoneNumber(phone);
+
+      // Appel API pour initier le paiement
       const { data } = await API.post("/payment/initiate", {
         amount: 5000,
         description: "Abonnement Quiz de Carabin Premium",
-        phone: phone
+        phone: formattedPhone
       });
 
       if (data.success && data.payment_url) {
@@ -81,12 +106,12 @@ const PaymentPage = () => {
             id="phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="Ex: 2250123456789"
+            placeholder="Ex: 0123456789 ou 2250123456789"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
           <p className="text-xs text-gray-500 mt-1">
-            Format: 225 suivis de votre numéro (sans espaces)
+            Format: 229 suivis de votre numéro (sans espaces) ou 0 suivis de votre numéro
           </p>
         </div>
 

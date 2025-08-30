@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import API from './services/api';
 
@@ -61,6 +62,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <ErrorBoundary>
       <Router>
         <Routes>
           {/* --------- Layout Public --------- */}
@@ -95,6 +97,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

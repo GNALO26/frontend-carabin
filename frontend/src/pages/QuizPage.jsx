@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
-import { useAuth } from "../context/AuthContext"; // Chemin corrigé
+import { useAuth } from "../contexts/AuthContext"; // Chemin corrigé
 
 const QuizPage = () => {
   const { id } = useParams();

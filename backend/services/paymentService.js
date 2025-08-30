@@ -21,8 +21,8 @@ const initiatePayment = async (paymentData) => {
       customer_name: paymentData.customer_name || 'Client Quiz de Carabin',
       customer_email: paymentData.email,
       customer_phone_number: paymentData.phone || '',
-      return_url: `${process.env.APP_URL}/payment-success`,
-      notify_url: `${process.env.API_BASE_URL}/api/payment/notify`,
+      return_url: `${process.env.APP_URL}`/payment-success,
+      notify_url: `${process.env.API_BASE_URL}`/api/payment/notify,
       channels: 'ALL',
       metadata: JSON.stringify({ userId: paymentData.userId })
     };

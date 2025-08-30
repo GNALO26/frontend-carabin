@@ -127,14 +127,17 @@ export const AuthProvider = ({ children }) => {
   // Vérification accès premium
 const hasPremiumAccess = () => {
   if (!user) return false;
-  if (user.subscription?.expiryDate) {
-    return new Date() < new Date(user.subscription.expiryDate);
-  }
-  // Fallback pour l'ancienne structure
+  
+  // Vérifier l'abonnement avec les deux structures possibles
   if (user.subscriptionEnd) {
     return new Date() < new Date(user.subscriptionEnd);
   }
-  return false;
+  if (user.subscription && user.subscription.expiryDate) 
+    {
+    return new Date() < new Date(user.subscription.expiryDate);
+    }
+  
+  return user.isSubscribed === true;
 };
 
   // Pendant chargement -> écran "loading"

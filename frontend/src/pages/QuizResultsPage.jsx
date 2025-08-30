@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext'; // Chemin corrigé
 import api from '../services/api';
 import QuizResults from '../components/quiz/QuizResults';
 import Button from '../components/ui/Button';
@@ -23,19 +23,20 @@ const QuizResultsPage = () => {
           setResult(location.state.result);
           
           // Récupérer les détails complets du quiz
-          const quizResponse = await api.get('/quiz/${id}');
+          const quizResponse = await api.get(`/quizzes/${id}`);
           setQuiz(quizResponse.data);
         } 
         // Sinon, récupérer depuis l'API
         else if (user) {
-          const resultResponse = await api.get('/quiz/attempts/${id}');
+          const resultResponse = await api.get(`/results/quiz/${id}`);
           setResult(resultResponse.data);
           
-          const quizResponse = await api.get('/quiz/${resultResponse.data.quiz}');
+          const quizResponse = await api.get(`/quizzes/${resultResponse.data.quizId}`);
           setQuiz(quizResponse.data);
         }
       } catch (err) {
         setError('Erreur de chargement des résultats');
+        console.error('Erreur chargement résultats:', err);
       } finally {
         setLoading(false);
       }
@@ -57,13 +58,13 @@ const QuizResultsPage = () => {
         <div className="flex justify-between items-center mb-8">
           <div className="text-center">
             <p className="text-sm text-gray-600">Score</p>
-            <p className="text-3xl font-bold">{result.score}%</p>
+            <p className="text-3xl font-bold">{result.percentage}%</p>
           </div>
           
           <div className="text-center">
             <p className="text-sm text-gray-600">Réussite</p>
             <p className="text-3xl font-bold">
-              {result.correctAnswers}/{quiz.questions.length}
+              {result.score}/{result.totalQuestions}
             </p>
           </div>
           
@@ -82,7 +83,7 @@ const QuizResultsPage = () => {
       </div>
       
       <div className="flex justify-center gap-4">
-        <Button onClick={() => navigate('/quiz/${quiz._id}')} variant="secondary">
+        <Button onClick={() => navigate(`/quiz/${quiz._id}`)} variant="secondary">
           Refaire le quiz
         </Button>
         

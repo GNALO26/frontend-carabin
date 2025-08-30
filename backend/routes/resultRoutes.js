@@ -3,6 +3,37 @@ const router = express.Router();
 const Result = require('../models/Result');
 const authMiddleware = require('../middlewares/authMiddleware');
 
+// POST - Sauvegarder un résultat de quiz
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { quizId, score, totalQuestions, answers, timeTaken } = req.body;
+
+    const result = new Result({
+      userId: req.user._id,
+      quizId,
+      score,
+      totalQuestions,
+      answers,
+      timeTaken,
+      startTime: new Date(Date.now() - timeTaken * 1000), // Calcul du startTime
+      endTime: new Date()
+    });
+
+    await result.save();
+    
+    // Populer les données pour la réponse
+    await result.populate('quizId', 'title category');
+    
+    res.status(201).json({
+      message: 'Résultat sauvegardé avec succès',
+      result
+    });
+  } catch (error) {
+    console.error('Erreur sauvegarde résultat:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la sauvegarde' });
+  }
+});
+
 // Obtenir les résultats d'un utilisateur
 router.get('/user', authMiddleware, async (req, res) => {
   try {

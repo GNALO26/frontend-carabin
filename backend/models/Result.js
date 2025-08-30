@@ -1,15 +1,18 @@
 const mongoose = require('mongoose');
 
 const answerSchema = new mongoose.Schema({
-  questionId: {
-    type: mongoose.Schema.Types.ObjectId,
+  questionIndex: {
+    type: Number,
     required: true
   },
-  selectedOption: {
-    type: String,
+  selectedAnswer: {
+    type: Number, // Index de la réponse sélectionnée
     required: true
   },
-  isCorrect: Boolean,
+  isCorrect: {
+    type: Boolean,
+    required: true
+  },
   timeTaken: {
     type: Number,
     default: 0
@@ -41,18 +44,22 @@ const resultSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
-  startTime: {
-    type: Date,
-    required: true
-  },
-  endTime: {
-    type: Date,
+  timeTaken: {
+    type: Number, // Temps total en secondes
     required: true
   },
   answers: [answerSchema],
   passed: {
     type: Boolean,
     default: false
+  },
+  startTime: {
+    type: Date,
+    default: Date.now
+  },
+  endTime: {
+    type: Date,
+    default: Date.now
   }
 }, { timestamps: true });
 
@@ -60,9 +67,6 @@ const resultSchema = new mongoose.Schema({
 resultSchema.pre('save', function(next) {
   if (this.totalQuestions > 0) {
     this.percentage = Math.round((this.score / this.totalQuestions) * 100);
-  }
-  // Si passed n'est pas défini, appliquer 70% par défaut
-  if (this.passed === undefined) {
     this.passed = this.percentage >= 70;
   }
   next();
