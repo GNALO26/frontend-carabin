@@ -1,106 +1,197 @@
 const Payment = require('../models/Payment');
+const User = require('../models/User');
+const Activity = require('../models/Activity');
 const { initiatePayment, verifyPayment } = require('../services/paymentService');
 const { sendAccessCode } = require('../services/emailService');
 
 exports.initiatePayment = async (req, res) => {
-  const { amount, email } = req.body;
-  
-  // Créer un ID de commande unique
-  const orderId = 'CMD-${Date.now()}-${Math.floor(Math.random() * 1000)}';
-  
   try {
-    // Créer enregistrement dans la base
-    const paymentRecord = new Payment({
-      user: req.userId,
-      amount,
-      orderId,
+    const { amount, description, phone } = req.body;
+    const user = req.user; // L'utilisateur doit être attaché à la requête par le middleware d'authentification
+
+    // Initier le paiement avec CinetPay
+    const paymentData = await initiatePayment({
+      amount: amount || 5000,
+      description: description || 'Abonnement Quiz de Carabin',
+      userId: user._id.toString(),
+      email: user.email,
+      phone: phone,
+      customer_name: user.name
+    });
+
+    // Enregistrer le paiement en base de données
+    const payment = new Payment({
+      userId: user._id,
+      email: user.email,
+      amount: amount || 5000,
+      description: description || 'Abonnement Quiz de Carabin',
+      paymentId: paymentData.payment_id,
+      transactionId: paymentData.transaction_id,
       status: 'pending'
     });
-    await paymentRecord.save();
-    // Extrait pour controller : backend/controllers/paymentController.js
-const Payment = require('../models/Payment');
-const { initiatePayment: svcInitiate, verifyPayment: svcVerify } = require('../services/paymentService');
-const { sendAccessCode } = require('../services/emailService');
 
-exports.initiatePayment = async (req, res) => {
-  try {
-    const { operator, phoneNumber, amount } = req.body;
-    const userId = req.userId || req.body.userId; // selon comment tu gères l'auth
-    const { transactionId, instructions, paymentId } = await svcInitiate({ operator, phoneNumber, amount, userId });
-    return res.json({ transactionId, instructions, paymentId });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Impossible d\'initier le paiement' });
+    await payment.save();
+
+    // Enregistrer l'activité de tentative de paiement
+    const activity = new Activity({
+      userId: user._id,
+      type: 'payment_initiated',
+      title: 'Tentative de paiement',
+      description: `A initié un paiement de ${amount || 5000} FCFA pour l'abonnement premium`,
+      data: {
+        amount: amount || 5000,
+        transactionId: paymentData.transaction_id
+      }
+    });
+    await activity.save();
+    
+    res.json({
+      success: true,
+      payment_url: paymentData.payment_url,
+      transaction_id: paymentData.transaction_id
+    });
+  } catch (error) {
+    console.error('Payment initiation error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
-exports.verify = async (req, res) => {
+exports.verifyPayment = async (req, res) => {
   try {
     const { transactionId } = req.body;
-    const result = await svcVerify(transactionId);
-    if (result.status === 'success') {
-      // envoyer le code d'accès par email si present
-      if (result.payment && result.payment.accessCode && result.payment.user) {
-        const user = await User.findById(result.payment.user);
-        if (user) {
-          await sendAccessCode(user.email, result.payment.accessCode);
+
+    const verification = await verifyPayment(transactionId);
+    
+    // Mettre à jour le statut du paiement
+    const payment = await Payment.findOneAndUpdate(
+      { transactionId },
+      { 
+        status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
+        operator: verification.data?.operator_id,
+        phoneNumber: verification.data?.phone_number
+      },
+      { new: true }
+    );
+
+    // Si le paiement est accepté, mettre à jour l'utilisateur
+    if (verification.status === 'ACCEPTED' && payment) {
+      await User.findByIdAndUpdate(payment.userId, {
+        isSubscribed: true,
+        subscriptionStart: new Date(),
+        subscriptionEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 jours
+      });
+
+      // Enregistrer l'activité de paiement réussi
+      const activity = new Activity({
+        userId: payment.userId,
+        type: 'payment_success',
+        title: 'Paiement réussi',
+        description: `A souscrit à l'abonnement premium`,
+        data: {
+          amount: payment.amount,
+          transactionId: payment.transactionId
         }
+      });
+      await activity.save();
+
+      // Envoyer le code d'accès par email si nécessaire
+      if (payment.accessCode) {
+        await sendAccessCode(payment.email, payment.accessCode);
+      }
+    } else if (verification.status !== 'ACCEPTED' && payment) {
+      // Enregistrer l'activité de paiement échoué
+      const activity = new Activity({
+        userId: payment.userId,
+        type: 'payment_failed',
+        title: 'Paiement échoué',
+        description: `Tentative de paiement échouée pour l'abonnement premium`,
+        data: {
+          amount: payment.amount,
+          transactionId: payment.transactionId,
+          reason: verification.message
+        }
+      });
+      await activity.save();
+    }
+
+    res.json({
+      success: verification.status === 'ACCEPTED',
+      status: verification.status,
+      message: verification.message,
+      payment: payment
+    });
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+};
+
+exports.handleNotification = async (req, res) => {
+  try {
+    const { transaction_id, cpm_result } = req.body;
+
+    if (transaction_id) {
+      const verification = await verifyPayment(transaction_id);
+      
+      const payment = await Payment.findOneAndUpdate(
+        { transactionId: transaction_id },
+        { 
+          status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
+          operator: verification.data?.operator_id,
+          phoneNumber: verification.data?.phone_number
+        },
+        { new: true }
+      );
+
+      // Si le paiement est accepté, mettre à jour l'utilisateur
+      if (verification.status === 'ACCEPTED' && payment) {
+        await User.findByIdAndUpdate(payment.userId, {
+          isSubscribed: true,
+          subscriptionStart: new Date(),
+          subscriptionEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 jours
+        });
+
+        // Enregistrer l'activité de paiement réussi via webhook
+        const activity = new Activity({
+          userId: payment.userId,
+          type: 'payment_success',
+          title: 'Paiement réussi (webhook)',
+          description: `A souscrit à l'abonnement premium via notification`,
+          data: {
+            amount: payment.amount,
+            transactionId: payment.transactionId,
+            source: 'webhook'
+          }
+        });
+        await activity.save();
       }
     }
-    return res.json(result);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Erreur de vérification du paiement' });
-  }
-};
 
-/*
-
-    // Initier paiement avec PaiementPro
-    const paymentInit = await initiatePayment({
-      amount,
-      orderId,
-      customerEmail: email,
-      returnUrl: 'https://votredomaine.com/payment/success',
-      cancelUrl: 'https://votredomaine.com/payment/cancel'
-    });
-
-    res.json({ 
-      paymentUrl: paymentInit.payment_url,
-      paymentId: paymentRecord._id
-    });
+    res.status(200).send('OK');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Payment notification error:', error);
+    res.status(500).send('ERROR');
   }
 };
 
-exports.handleCallback = async (req, res) => {
-  const { transaction_id, status } = req.query;
-  
+exports.getPaymentStatus = async (req, res) => {
   try {
-    // Vérifier le statut avec PaiementPro
-    const verification = await verifyPayment(transaction_id);
+    const user = await User.findById(req.user._id);
     
-    if (verification.status === 'success') {
-      const payment = await Payment.findById(req.query.payment_id);
-      
-      // Générer code d'accès
-      const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      // Mettre à jour le paiement
-      payment.status = 'completed';
-      payment.transactionId = transaction_id;
-      payment.accessCode = accessCode;
-      await payment.save();
-      
-      // Envoyer le code par email
-      await sendAccessCode(payment.user.email, accessCode);
-      
-      return res.redirect('/payment/success');
-    }*/
-    
-    res.redirect('/payment/failed');
+    res.json({
+      isSubscribed: user.isSubscribed,
+      subscriptionStart: user.subscriptionStart,
+      subscriptionEnd: user.subscriptionEnd,
+      hasActiveSubscription: user.isSubscribed && new Date() < new Date(user.subscriptionEnd)
+    });
   } catch (error) {
-    res.status(500).redirect('/payment/error');
+    console.error('Subscription status error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 };

@@ -61,44 +61,44 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <ErrorBoundary>
-      <Router>
-        <Routes>
-          {/* --------- Layout Public --------- */}
-          <Route element={<Layout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/quizzes" element={<QuizListPage />} />
-            <Route path="/quiz/:id" element={<QuizPage />} />
-            <Route path="/generated/:fileName" element={<GeneratedQuizPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            {/* Routes utilisateur authentifié */}
-            <Route element={<PrivateRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/payment" element={<PaymentPage />} />
-              <Route path="/payment/success" element={<PaymentSuccess />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* --------- Layout Public --------- */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/quizzes" element={<QuizListPage />} />
+              <Route path="/quiz/:id" element={<QuizPage />} />
+              <Route path="/generated/:fileName" element={<GeneratedQuizPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              {/* Routes utilisateur authentifié */}
+              <Route element={<PrivateRoute />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/payment" element={<PaymentPage />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* --------- Layout Admin --------- */}
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route element={<AdminRoute />}>
-            <Route element={<AdminLayout />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/quizzes" element={<AdminQuizzesPage />} />
-              <Route path="/admin/quizzes/new" element={<QuizEditor />} />
-              <Route path="/admin/quizzes/edit/:id" element={<QuizEditor />} />
-              <Route path="/admin/users" element={<UsersPage />} />
+            {/* --------- Layout Admin --------- */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/quizzes" element={<AdminQuizzesPage />} />
+                <Route path="/admin/quizzes/new" element={<QuizEditor />} />
+                <Route path="/admin/quizzes/edit/:id" element={<QuizEditor />} />
+                <Route path="/admin/users" element={<UsersPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* --------- 404 --------- */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Router>
-      </ErrorBoundary>
-    </AuthProvider>
+            {/* --------- 404 --------- */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

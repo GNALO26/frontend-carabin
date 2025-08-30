@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
-import { useAuth } from "../contexts/AuthContext"; // Chemin corrigé
+import { useAuth } from "../contexts/AuthContext";
 
 const QuizPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, hasPremiumAccess } = useAuth();
+  const { hasPremiumAccess } = useAuth();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -15,6 +15,7 @@ const QuizPage = () => {
   const [selectedAnswers, setSelectedAnswers] = useState([]);
   const [score, setScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
+  const [showExplanations, setShowExplanations] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [timeTaken, setTimeTaken] = useState(0);
 
@@ -72,7 +73,17 @@ const QuizPage = () => {
 
   const handleAnswerSelect = (answerIndex) => {
     const newSelectedAnswers = [...selectedAnswers];
-    newSelectedAnswers[currentQuestionIndex] = answerIndex;
+    const currentSelections = newSelectedAnswers[currentQuestionIndex] || [];
+    
+    // Vérifier si la réponse est déjà sélectionnée
+    if (currentSelections.includes(answerIndex)) {
+      // Désélectionner
+      newSelectedAnswers[currentQuestionIndex] = currentSelections.filter(idx => idx !== answerIndex);
+    } else {
+      // Sélectionner
+      newSelectedAnswers[currentQuestionIndex] = [...currentSelections, answerIndex];
+    }
+    
     setSelectedAnswers(newSelectedAnswers);
   };
 
@@ -94,7 +105,11 @@ const QuizPage = () => {
         ? question.correctAnswers 
         : [question.correctAnswers];
       
-      const isCorrect = correctAnswers.includes(selectedAnswers[index]);
+      // Pour les réponses multiples, vérifier si toutes les réponses correctes sont sélectionnées
+      // et qu'aucune réponse incorrecte n'est sélectionnée
+      const userAnswers = selectedAnswers[index] || [];
+      const isCorrect = correctAnswers.every(ca => userAnswers.includes(ca)) && 
+                        userAnswers.every(ua => correctAnswers.includes(ua));
       
       if (isCorrect) {
         calculatedScore += 1;
@@ -102,8 +117,10 @@ const QuizPage = () => {
       
       answersWithDetails.push({
         questionIndex: index,
-        selectedAnswer: selectedAnswers[index],
-        isCorrect
+        selectedAnswers: userAnswers,
+        isCorrect,
+        correctAnswers: correctAnswers,
+        explanation: question.explanation
       });
     });
     
@@ -184,13 +201,66 @@ const QuizPage = () => {
               <p className="text-lg text-gray-600 mt-2">
                 {score >= quiz.questions.length * 0.7 ? "Félicitations! Vous avez réussi!" : "Essayez encore pour améliorer votre score."}
               </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Temps passé: {Math.floor(timeTaken / 60)}m {timeTaken % 60}s
+              </p>
             </div>
-            <div className="flex justify-center">
+
+            {!showExplanations ? (
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={() => setShowExplanations(true)}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Voir les justificatifs des réponses
+                </button>
+              </div>
+            ) : (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-center mb-6">Justificatifs des réponses</h2>
+                {quiz.questions.map((question, index) => {
+                  const userAnswers = selectedAnswers[index] || [];
+                  const correctAnswers = Array.isArray(question.correctAnswers) 
+                    ? question.correctAnswers 
+                    : [question.correctAnswers];
+                  
+                  const isCorrect = correctAnswers.every(ca => userAnswers.includes(ca)) && 
+                                    userAnswers.every(ua => correctAnswers.includes(ua));
+                  
+                  return (
+                    <div key={index} className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                      <h3 className="font-semibold mb-2">{index + 1}. {question.text}</h3>
+                      <p className="mb-2">
+                        Vos réponses: {userAnswers.length > 0 
+                          ? userAnswers.map(ua => question.options[ua]).join(', ')
+                          : 'Non répondue'}
+                      </p>
+                      <p className="mb-2">
+                        Réponses correctes: {correctAnswers.map(ca => question.options[ca]).join(', ')}
+                      </p>
+                      {question.explanation && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          <strong>Explication:</strong> {question.explanation}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-center gap-4">
               <button
-                onClick={() => navigate("/")}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={() => navigate("/quizzes")}
+                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
-                Retour à l'accueil
+                Voir d'autres quiz
+              </button>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Tableau de bord
               </button>
             </div>
           </div>
@@ -214,7 +284,7 @@ const QuizPage = () => {
                 Question {currentQuestionIndex + 1} sur {quiz.questions.length}
               </span>
               <span className="text-sm text-gray-500">
-                Temps: {quiz.duration} minutes
+                Temps: {Math.floor(timeTaken / 60)}m {timeTaken % 60}s
               </span>
             </div>
           </div>
@@ -222,19 +292,33 @@ const QuizPage = () => {
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">{currentQuestion.text}</h2>
             <div className="space-y-3">
-              {currentQuestion.options.map((option, index) => (
-                <div
-                  key={index}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedAnswers[currentQuestionIndex] === index
-                      ? "bg-blue-100 border-blue-500"
-                      : "bg-white border-gray-300 hover:bg-gray-50"
-                  }`}
-                  onClick={() => handleAnswerSelect(index)}
-                >
-                  {option}
-                </div>
-              ))}
+              {currentQuestion.options.map((option, index) => {
+                const isSelected = selectedAnswers[currentQuestionIndex]?.includes(index);
+                return (
+                  <div
+                    key={index}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      isSelected
+                        ? "bg-blue-100 border-blue-500"
+                        : "bg-white border-gray-300 hover:bg-gray-50"
+                    }`}
+                    onClick={() => handleAnswerSelect(index)}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 border rounded mr-3 flex items-center justify-center ${
+                        isSelected ? "bg-blue-500 border-blue-500" : "border-gray-300"
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      {option}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -249,7 +333,7 @@ const QuizPage = () => {
             
             <button
               onClick={handleNextQuestion}
-              disabled={selectedAnswers[currentQuestionIndex] === undefined}
+              disabled={selectedAnswers[currentQuestionIndex] === undefined || selectedAnswers[currentQuestionIndex]?.length === 0}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {currentQuestionIndex === quiz.questions.length - 1 ? "Terminer" : "Suivant"}

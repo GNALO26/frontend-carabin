@@ -59,8 +59,8 @@ router.post('/verify', authMiddleware, async (req, res) => {
       { transactionId },
       { 
         status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
-        operator: verification.data.operator_id,
-        phoneNumber: verification.data.phone_number
+        operator: verification.data?.operator_id,
+        phoneNumber: verification.data?.phone_number
       },
       { new: true }
     );

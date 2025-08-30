@@ -7,7 +7,7 @@ const API_BASE_URL =
 
 const API = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000, // Augmenté le timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,6 +29,7 @@ API.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
 // Fonction pour attendre un délai
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -69,11 +70,16 @@ API.interceptors.response.use(
     console.error('Erreur API:', {
       status: error.response ? error.response.status : 'No response',
       data: error.response ? error.response.data : error.message,
+      url: originalRequest?.url,
     });
 
     // Message d'erreur clair pour le frontend
     const message = error.response?.data?.error || error.response?.data?.message || 'Erreur inconnue de l\'API';
-    return Promise.reject({ message });
+    return Promise.reject({ 
+      message,
+      status: error.response?.status,
+      url: originalRequest?.url
+    });
   }
 );
 
