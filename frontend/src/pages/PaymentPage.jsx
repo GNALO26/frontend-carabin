@@ -1,54 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext"; // Chemin corrigé
 
 const PaymentPage = () => {
   const [amount] = useState(5000);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user, refreshUserData } = useAuth(); // Utilisez user et refreshUserData
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!user) {
       navigate("/login");
-      return;
     }
-    setUser(currentUser);
-  }, [currentUser, navigate]);
+  }, [user, navigate]);
 
- const handlePayment = async () => {
-  try {
-    setLoading(true);
-    setError("");
+  const handlePayment = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    if (!phone) {
-      setError("Veuillez entrer votre numéro de téléphone");
-      return;
+      if (!phone) {
+        setError("Veuillez entrer votre numéro de téléphone");
+        return;
+      }
+
+      // Appel API pour CinetPay
+      const { data } = await API.post("/payment/initiate", {
+        amount: 5000,
+        description: "Abonnement Quiz de Carabin Premium",
+        phone: phone
+      });
+
+      if (data.success && data.payment_url) {
+        window.location.href = data.payment_url;
+      } else {
+        setError(data.error || "Impossible de générer le lien de paiement");
+      }
+    } catch (err) {
+      console.error("Erreur paiement:", err);
+      setError(err.response?.data?.error || err.message || "Erreur lors de l'initialisation du paiement");
+    } finally {
+      setLoading(false);
     }
-
-    // Appel API corrigé
-    const { data } = await API.post("/payment/initiate", {
-      amount: 5000, // Montant fixe pour l'abonnement
-      description: "Abonnement Quiz de Carabin Premium",
-      phone: phone
-      // Note: Le backend récupère userId et email à partir du token
-    });
-
-    if (data.success && data.payment_url) {
-      window.location.href = data.payment_url;
-    } else {
-      setError(data.error || "Impossible de générer le lien de paiement");
-    }
-  } catch (err) {
-    console.error("Erreur paiement:", err);
-    setError(err.response?.data?.error || err.message || "Erreur lors de l'initialisation du paiement");
-  } finally {
-    setLoading(false);
-  }
   };
 
   if (!user) {

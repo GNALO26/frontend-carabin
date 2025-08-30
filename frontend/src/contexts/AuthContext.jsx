@@ -127,8 +127,14 @@ export const AuthProvider = ({ children }) => {
   // Vérification accès premium
 const hasPremiumAccess = () => {
   if (!user) return false;
-  if (!user.subscriptionEnd) return false;
-  return new Date() < new Date(user.subscription.expiryDate);
+  if (user.subscription?.expiryDate) {
+    return new Date() < new Date(user.subscription.expiryDate);
+  }
+  // Fallback pour l'ancienne structure
+  if (user.subscriptionEnd) {
+    return new Date() < new Date(user.subscriptionEnd);
+  }
+  return false;
 };
 
   // Pendant chargement -> écran "loading"

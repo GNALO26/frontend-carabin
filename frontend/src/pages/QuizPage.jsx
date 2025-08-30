@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext"; // Chemin corrigé
 
 const QuizPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { hasPremiumAccess } = useAuth();
+  const { user, hasPremiumAccess } = useAuth();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -15,21 +15,23 @@ const QuizPage = () => {
   const [selectedAnswers, setSelectedAnswers] = useState([]);
   const [score, setScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [timeTaken, setTimeTaken] = useState(0);
 
   useEffect(() => {
+    setStartTime(new Date());
+    
     const fetchQuiz = async () => {
       try {
         const response = await API.get(`/quizzes/${id}`);
         const quizData = response.data;
         
-        // Vérifier si l'utilisateur a accès au quiz premium
         if (!quizData.free && !hasPremiumAccess()) {
           setRequiresSubscription(true);
           setLoading(false);
           return;
         }
         
-        // Déduplication des questions côté client
         const uniqueQuestions = [];
         const seenQuestions = new Set();
         
@@ -57,6 +59,17 @@ const QuizPage = () => {
     fetchQuiz();
   }, [id, hasPremiumAccess]);
 
+  // Chronomètre
+  useEffect(() => {
+    let timer;
+    if (startTime && !quizFinished) {
+      timer = setInterval(() => {
+        setTimeTaken(Math.floor((new Date() - startTime) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [startTime, quizFinished]);
+
   const handleAnswerSelect = (answerIndex) => {
     const newSelectedAnswers = [...selectedAnswers];
     newSelectedAnswers[currentQuestionIndex] = answerIndex;
@@ -74,12 +87,42 @@ const QuizPage = () => {
 
   const calculateScore = () => {
     let calculatedScore = 0;
+    const answersWithDetails = [];
+    
     quiz.questions.forEach((question, index) => {
-      if (question.correctAnswers.includes(selectedAnswers[index])) {
+      const correctAnswers = Array.isArray(question.correctAnswers) 
+        ? question.correctAnswers 
+        : [question.correctAnswers];
+      
+      const isCorrect = correctAnswers.includes(selectedAnswers[index]);
+      
+      if (isCorrect) {
         calculatedScore += 1;
       }
+      
+      answersWithDetails.push({
+        questionIndex: index,
+        selectedAnswer: selectedAnswers[index],
+        isCorrect
+      });
     });
+    
     setScore(calculatedScore);
+    saveQuizResult(calculatedScore, answersWithDetails);
+  };
+
+  const saveQuizResult = async (finalScore, answersWithDetails) => {
+    try {
+      await API.post('/results', {
+        quizId: id,
+        score: finalScore,
+        totalQuestions: quiz.questions.length,
+        answers: answersWithDetails,
+        timeTaken: timeTaken
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde du résultat:", error);
+    }
   };
 
   if (loading) {

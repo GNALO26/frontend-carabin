@@ -107,6 +107,11 @@ async function seedFromDocx() {
         free: true
       },
       {
+        path: path.join(__dirname, '../uploads/echange.docx'),
+        category: 'echange',
+        free: false
+      },
+      {
         path: path.join(__dirname, '../uploads/physiologie-renale.docx'),
         category: 'physiologie-renale',
         free: true
