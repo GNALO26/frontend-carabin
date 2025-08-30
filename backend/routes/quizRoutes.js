@@ -38,19 +38,27 @@ router.get('/premium', async (req, res) => {
   }
 });
 // Récupérer un quiz spécifique par ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) {
       return res.status(404).json({ error: 'Quiz non trouvé' });
     }
+
+    // Vérifier si le quiz est premium et si l'utilisateur est abonné
+    if (!quiz.free && !req.user.isSubscribed) {
+      return res.status(403).json({ 
+        error: 'Abonnement requis pour accéder à ce quiz',
+        requiresSubscription: true 
+      });
+    }
+
     res.json(quiz);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Impossible de récupérer le quiz' });
   }
 });
-
 // Récupérer les quiz par type (Gratuit / Premium)
 router.get('/by-type', authMiddleware, async (req, res) => {
   try {

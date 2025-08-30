@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const QuizPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPremiumAccess } = useAuth();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [requiresSubscription, setRequiresSubscription] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState([]);
   const [score, setScore] = useState(0);
@@ -17,9 +20,34 @@ const QuizPage = () => {
     const fetchQuiz = async () => {
       try {
         const response = await API.get(`/quizzes/${id}`);
-        setQuiz(response.data);
+        const quizData = response.data;
+        
+        // Vérifier si l'utilisateur a accès au quiz premium
+        if (!quizData.free && !hasPremiumAccess()) {
+          setRequiresSubscription(true);
+          setLoading(false);
+          return;
+        }
+        
+        // Déduplication des questions côté client
+        const uniqueQuestions = [];
+        const seenQuestions = new Set();
+        
+        quizData.questions.forEach(question => {
+          const questionKey = question.text.trim().toLowerCase();
+          if (!seenQuestions.has(questionKey)) {
+            seenQuestions.add(questionKey);
+            uniqueQuestions.push(question);
+          }
+        });
+        
+        setQuiz({ ...quizData, questions: uniqueQuestions });
       } catch (err) {
-        setError("Erreur lors du chargement du quiz");
+        if (err.response?.status === 403) {
+          setRequiresSubscription(true);
+        } else {
+          setError("Erreur lors du chargement du quiz");
+        }
         console.error(err);
       } finally {
         setLoading(false);
@@ -27,7 +55,7 @@ const QuizPage = () => {
     };
 
     fetchQuiz();
-  }, [id]);
+  }, [id, hasPremiumAccess]);
 
   const handleAnswerSelect = (answerIndex) => {
     const newSelectedAnswers = [...selectedAnswers];
@@ -39,7 +67,6 @@ const QuizPage = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // Calculate score
       calculateScore();
       setQuizFinished(true);
     }
@@ -59,6 +86,26 @@ const QuizPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (requiresSubscription) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl text-center">
+          <div className="text-yellow-500 text-6xl mb-4">🔒</div>
+          <h1 className="text-2xl font-bold text-yellow-800 mb-4">Accès Restreint</h1>
+          <p className="text-gray-600 mb-6">
+            Ce quiz est réservé aux membres premium. Abonnez-vous pour y accéder.
+          </p>
+          <button
+            onClick={() => navigate("/payment")}
+            className="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            S'abonner maintenant
+          </button>
+        </div>
       </div>
     );
   }

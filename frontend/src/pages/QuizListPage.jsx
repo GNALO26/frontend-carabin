@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API from "../services/api";
+import { useAuth } from "../contexts/AuthContext"; // Import ajouté
 
 const QuizListPage = () => {
   const [quizzesByType, setQuizzesByType] = useState({ free: [], premium: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { hasPremiumAccess } = useAuth(); // Ligne ajoutée
 
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const token = localStorage.getItem("token"); // Récupère le token si l'utilisateur est connecté
+        const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const { data } = await API.get("/quizzes/by-type", { headers }); // Utilise l'endpoint correct
-        setQuizzesByType(data);
+        const { data } = await API.get("/quizzes", { headers });
+        
+        // Organiser les quizs par type
+        const freeQuizzes = data.filter(quiz => quiz.free);
+        const premiumQuizzes = data.filter(quiz => !quiz.free);
+        
+        setQuizzesByType({ free: freeQuizzes, premium: premiumQuizzes });
       } catch (err) {
         if (err.response?.status === 401 || err.response?.status === 403) {
           setError("Veuillez vous connecter pour voir les quiz premium.");
@@ -30,6 +37,7 @@ const QuizListPage = () => {
     fetchQuizzes();
   }, []);
 
+
   if (loading) return <Loading />;
   if (error) return <ErrorMessage message={error} />;
 
@@ -44,6 +52,7 @@ const QuizListPage = () => {
     </div>
   );
 };
+
 
 const QuizSection = ({ title, quizzes, badgeColor }) => {
   if (quizzes.length === 0) return <EmptyMessage />;

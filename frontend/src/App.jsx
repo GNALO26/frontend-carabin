@@ -9,6 +9,7 @@ import QuizPage from './pages/QuizPage.jsx';
 import QuizListPage from './pages/QuizListPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
+import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
@@ -74,6 +75,7 @@ function App() {
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/payment" element={<PaymentPage />} />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
             </Route>
           </Route>
 

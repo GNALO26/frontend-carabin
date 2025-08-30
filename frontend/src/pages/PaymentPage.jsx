@@ -20,33 +20,35 @@ const PaymentPage = () => {
     setUser(currentUser);
   }, [currentUser, navigate]);
 
-  const handlePayment = async () => {
-    try {
-      setLoading(true);
-      setError("");
+ const handlePayment = async () => {
+  try {
+    setLoading(true);
+    setError("");
 
-      if (!phone) {
-        setError("Veuillez entrer votre numéro de téléphone");
-        return;
-      }
-
-      const { data } = await API.post("/api/payment/initiate", {
-        amount,
-        description: "Abonnement Quiz de Carabin Premium",
-        phone
-      });
-
-      if (data.success && data.payment_url) {
-        window.location.href = data.payment_url;
-      } else {
-        setError("Impossible de générer le lien de paiement");
-      }
-    } catch (err) {
-      console.error("Erreur paiement:", err);
-      setError(err.response?.data?.error || "Erreur lors de l'initialisation du paiement");
-    } finally {
-      setLoading(false);
+    if (!phone) {
+      setError("Veuillez entrer votre numéro de téléphone");
+      return;
     }
+
+    // Appel API corrigé
+    const { data } = await API.post("/payment/initiate", {
+      amount: 5000, // Montant fixe pour l'abonnement
+      description: "Abonnement Quiz de Carabin Premium",
+      phone: phone
+      // Note: Le backend récupère userId et email à partir du token
+    });
+
+    if (data.success && data.payment_url) {
+      window.location.href = data.payment_url;
+    } else {
+      setError(data.error || "Impossible de générer le lien de paiement");
+    }
+  } catch (err) {
+    console.error("Erreur paiement:", err);
+    setError(err.response?.data?.error || err.message || "Erreur lors de l'initialisation du paiement");
+  } finally {
+    setLoading(false);
+  }
   };
 
   if (!user) {

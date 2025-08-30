@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API from "../services/api";
+import { useAuth } from "../contexts/AuthContext"; // Import ajouté
 
 const HomePage = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState(null);
+  const { user, hasPremiumAccess } = useAuth(); // Ligne ajoutée
 
   useEffect(() => {
     const fetchQuizzes = async () => {
-      const token = localStorage.getItem("token");
-      if (token) setUser({ isLoggedIn: true });
+      //const token = localStorage.getItem("token");
+      //if (token) setUser({ isLoggedIn: true });
 
       try {
         console.log("Tentative de récupération des quizs...");
@@ -26,11 +27,7 @@ const HomePage = () => {
         }
       } catch (err) {
         console.error("Erreur complète:", err);
-        
-        // Gestion d'erreur améliorée
-        const errorDetails = err.response?.data || err.message || "Erreur inconnue";
-        console.error("Détails de l'erreur:", errorDetails);
-        
+        console.error("Détails de l'erreur:", err.response?.data || err.message);
         setError("Impossible de charger les quiz. Veuillez réessayer.");
         setQuizzes([]);
       } finally {
@@ -40,6 +37,7 @@ const HomePage = () => {
 
     fetchQuizzes();
   }, []);
+  
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Hero Section - inchangée */}
@@ -122,22 +120,34 @@ const HomePage = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <div className="p-6 flex flex-col flex-grow">
-                      <h3 className="text-xl font-semibold mb-2 text-gray-900">{quiz.title}</h3>
-                      <p className="text-gray-600 mb-4 flex-grow">{quiz.description}</p>
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                          {quiz.questions?.length || 0} questions
-                        </span>
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${quiz.free ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {quiz.free ? 'Gratuit' : 'Premium'}
-                        </span>
-                      </div>
-                      <div className="mt-4">
-                        <Link to={`/quiz/${quiz._id}`} className="w-full block text-center bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
+               <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-xl font-semibold mb-2 text-gray-900">{quiz.title}</h3>
+                    <p className="text-gray-600 mb-4 flex-grow">{quiz.description}</p>
+                    <div className="flex justify-between items-center mt-auto">
+                      <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        {quiz.questions?.length || 0} questions
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${quiz.free ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {quiz.free ? 'Gratuit' : 'Premium'}
+                      </span>
+                    </div>
+                    <div className="mt-4">
+                      {quiz.free || hasPremiumAccess() ? (
+                        <Link 
+                          to={`/quiz/${quiz._id}`}
+                          className="w-full block text-center bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors font-medium"
+                        >
                           Commencer
                         </Link>
-                      </div>
+                      ) : (
+                        <Link
+                          to="/payment"
+                          className="w-full block text-center bg-yellow-500 text-white py-2 rounded-md hover:bg-yellow-600 transition-colors font-medium"
+                        >
+                          S'abonner pour accéder
+                        </Link>
+                      )}
+                    </div>
                     </div>
                   </div>
                 ))
