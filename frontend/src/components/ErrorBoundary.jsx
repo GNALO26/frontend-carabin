@@ -5,20 +5,15 @@ class ErrorBoundary extends React.Component {
     super(props);
     this.state = { 
       hasError: false, 
-      error: null, 
-      errorInfo: null 
+      error: null
     };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
     console.error('Error caught by boundary:', error, errorInfo);
   }
 
@@ -31,19 +26,14 @@ class ErrorBoundary extends React.Component {
             <p className="text-gray-600 mb-4">
               Désolé, quelque chose s'est mal passé. Veuillez rafraîchir la page.
             </p>
-            <details className="mb-4 text-left">
-              <summary className="cursor-pointer text-blue-600">Détails techniques</summary>
-              <pre className="mt-2 text-xs overflow-auto bg-gray-100 p-2 rounded">
-                {this.state.error && this.state.error.toString()}
-                <br />
-                {this.state.errorInfo ? this.state.errorInfo.componentStack : 'Aucun détail supplémentaire'}
-              </pre>
-            </details>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.href = '/';
+              }}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
-              Rafraîchir la page
+              Retour à l'accueil
             </button>
           </div>
         </div>

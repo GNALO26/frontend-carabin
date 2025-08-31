@@ -102,27 +102,41 @@ export const paymentService = {
    * @param {string} phone - Numéro de téléphone à formater
    * @returns {string} Numéro formaté (229XXXXXXXXX)
    */
-  formatPhoneNumber: (phone) => {
-    // Nettoyer le numéro (supprimer espaces, caractères spéciaux)
-    const cleaned = phone.replace(/\D/g, '');
-    
-    // Si le numéro commence par 229, le retourner tel quel
-    if (cleaned.startsWith('229')) {
-      return cleaned;
-    }
-    
-    // Si le numéro a 10 chiffres et commence par 0, ajouter l'indicatif 229
-    if (cleaned.length === 10 && cleaned.startsWith('0')) {
-      return '229' + cleaned.substring(1);
-    }
-    
-    // Si le numéro a 9 chiffres (sans le 0), ajouter l'indicatif 229
-    if (cleaned.length === 9) {
-      return '229' + cleaned;
-    }
-    
-    // Retourner le numéro original si le format n'est pas reconnu
+  // Dans paymentService.js - fonction de formatage pour le Bénin
+     formatPhoneNumber : (phone) => {
+  // Nettoyer le numéro (supprimer espaces, caractères spéciaux)
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Format Bénin: 229 + 8 chiffres (sans le 0 initial)
+  
+  // Si le numéro commence par 229 et a 11 chiffres, c'est bon
+  if (cleaned.startsWith('229') && cleaned.length === 11) {
     return cleaned;
+  }
+  
+  // Si le numéro a 8 chiffres (format local: 01 23 45 67 89)
+  if (cleaned.length === 8) {
+    return '229' + cleaned;
+  }
+  
+  // Si le numéro a 9 chiffres et commence par 0 (format local: 01 23 45 67 89 avec un 0)
+  if (cleaned.length === 9 && cleaned.startsWith('0')) {
+    return '229' + cleaned.substring(1);
+  }
+  
+  // Si le numéro a 10 chiffres (format international: 229012345678)
+  if (cleaned.length === 10 && cleaned.startsWith('229')) {
+    return cleaned;
+  }
+  
+  // Si le numéro a 12 chiffres (229 + 9 chiffres, trop long)
+  if (cleaned.length === 12 && cleaned.startsWith('229')) {
+    return cleaned.substring(0, 11); // Garder seulement 11 chiffres
+  }
+  
+  // Pour tout autre format, retourner le numéro nettoyé
+  return cleaned;
+
   },
 
   /**

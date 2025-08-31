@@ -9,7 +9,7 @@ exports.initiatePayment = async (req, res) => {
     const { amount, description, phone } = req.body;
     const user = req.user;
 
-    // Validation du numéro de téléphone
+    // Validation des données requises
     if (!phone) {
       return res.status(400).json({
         success: false,
@@ -17,43 +17,54 @@ exports.initiatePayment = async (req, res) => {
       });
     }
 
-    // Formater le numéro pour le Bénin (229)
-    const formatPhoneNumber = (phone) => {
-      const cleaned = phone.replace(/\D/g, '');
-      
-      // Si le numéro commence par 229, le retourner tel quel
-      if (cleaned.startsWith('229')) {
-        return cleaned;
-      }
-      
-      // Si le numéro a 8 chiffres (format local Bénin: 01 XX XX XX)
-      if (cleaned.length === 8 && cleaned.startsWith('01')) {
-        return '229' + cleaned;
-      }
-      
-      // Si le numéro a 9 chiffres et commence par 0 (format local: 0X XX XX XX XX)
-      if (cleaned.length === 9 && cleaned.startsWith('0')) {
-        return '229' + cleaned.substring(1);
-      }
-      
-      // Si le numéro a 10 chiffres (format international sans +)
-      if (cleaned.length === 10 && cleaned.startsWith('229')) {
-        return cleaned;
-      }
-      
-      return cleaned;
-    };
+    // Nettoyer et valider le format du numéro de téléphone pour le Bénin
+    const cleanedPhone = phone.replace(/\D/g, '');
+    
+    // Validation spécifique pour les numéros béninois
+    // Format attendu: 229 + 8 chiffres (ex: 22901234567)
+    let formattedPhone;
+    
+    if (cleanedPhone.startsWith('229') && cleanedPhone.length === 11) {
+      // Format déjà correct: 229 + 8 chiffres = 11 chiffres
+      formattedPhone = cleanedPhone;
+    } else if (cleanedPhone.length === 8 && cleanedPhone.startsWith('01')) {
+      // Format local: 8 chiffres commençant par 01 (ex: 01234567)
+      formattedPhone = '229' + cleanedPhone;
+    } else if (cleanedPhone.length === 9 && cleanedPhone.startsWith('0')) {
+      // Format local avec 0: 9 chiffres commençant par 0 (ex: 001234567)
+      formattedPhone = '229' + cleanedPhone.substring(1);
+    } else if (cleanedPhone.length === 10 && cleanedPhone.startsWith('229')) {
+      // Format avec 10 chiffres (trop court)
+      return res.status(400).json({
+        success: false,
+        error: 'Numéro invalide. Format attendu: 229 suivis de 8 chiffres (ex: 22901234567)'
+      });
+    } else {
+      // Format non reconnu
+      return res.status(400).json({
+        success: false,
+        error: 'Format de numéro invalide. Utilisez le format: 22901234567'
+      });
+    }
 
-    const formattedPhone = formatPhoneNumber(phone);
+    // Validation finale: doit être exactement 229 + 8 chiffres = 11 chiffres
+    if (!formattedPhone.match(/^229[0-9]{8}$/)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Format de numéro invalide. Le numéro doit avoir 11 chiffres: 229 + 8 chiffres'
+      });
+    }
+
+    console.log('Tentative de paiement avec le numéro:', formattedPhone);
 
     // Initier le paiement avec CinetPay
     const paymentData = await initiatePayment({
       amount: amount || 5000,
-      description: description || 'Abonnement Quiz de Carabin',
+      description: description || 'Abonnement Quiz de Carabin Premium',
       userId: user._id.toString(),
       email: user.email,
       phone: formattedPhone,
-      customer_name: user.name
+      customer_name: user.name || 'Client Quiz de Carabin'
     });
 
     // Enregistrer le paiement en base de données
@@ -61,10 +72,11 @@ exports.initiatePayment = async (req, res) => {
       userId: user._id,
       email: user.email,
       amount: amount || 5000,
-      description: description || 'Abonnement Quiz de Carabin',
+      description: description || 'Abonnement Quiz de Carabin Premium',
       paymentId: paymentData.payment_id,
       transactionId: paymentData.transaction_id,
-      status: 'pending'
+      status: 'pending',
+      phoneNumber: formattedPhone
     });
 
     await payment.save();
@@ -77,7 +89,8 @@ exports.initiatePayment = async (req, res) => {
       description: `A initié un paiement de ${amount || 5000} FCFA pour l'abonnement premium`,
       data: {
         amount: amount || 5000,
-        transactionId: paymentData.transaction_id
+        transactionId: paymentData.transaction_id,
+        phone: formattedPhone
       }
     });
     await activity.save();
@@ -100,6 +113,13 @@ exports.verifyPayment = async (req, res) => {
   try {
     const { transactionId } = req.body;
 
+    if (!transactionId) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID de transaction requis'
+      });
+    }
+
     const verification = await verifyPayment(transactionId);
     
     // Mettre à jour le statut du paiement
@@ -108,13 +128,21 @@ exports.verifyPayment = async (req, res) => {
       { 
         status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
         operator: verification.data?.operator_id,
-        phoneNumber: verification.data?.phone_number
+        phoneNumber: verification.data?.phone_number,
+        verifiedAt: new Date()
       },
       { new: true }
     );
 
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Paiement non trouvé'
+      });
+    }
+
     // Si le paiement est accepté, mettre à jour l'utilisateur
-    if (verification.status === 'ACCEPTED' && payment) {
+    if (verification.status === 'ACCEPTED') {
       await User.findByIdAndUpdate(payment.userId, {
         isSubscribed: true,
         subscriptionStart: new Date(),
@@ -129,7 +157,8 @@ exports.verifyPayment = async (req, res) => {
         description: `A souscrit à l'abonnement premium`,
         data: {
           amount: payment.amount,
-          transactionId: payment.transactionId
+          transactionId: payment.transactionId,
+          operator: verification.data?.operator_id
         }
       });
       await activity.save();
@@ -138,7 +167,7 @@ exports.verifyPayment = async (req, res) => {
       if (payment.accessCode) {
         await sendAccessCode(payment.email, payment.accessCode);
       }
-    } else if (verification.status !== 'ACCEPTED' && payment) {
+    } else {
       // Enregistrer l'activité de paiement échoué
       const activity = new Activity({
         userId: payment.userId,
@@ -171,7 +200,13 @@ exports.verifyPayment = async (req, res) => {
 
 exports.handleNotification = async (req, res) => {
   try {
-    const { transaction_id, cpm_result } = req.body;
+    const { transaction_id, cpm_result, cpm_signature } = req.body;
+
+    console.log('Notification reçue de CinetPay:', {
+      transaction_id,
+      cpm_result,
+      cpm_signature
+    });
 
     if (transaction_id) {
       const verification = await verifyPayment(transaction_id);
@@ -181,7 +216,8 @@ exports.handleNotification = async (req, res) => {
         { 
           status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
           operator: verification.data?.operator_id,
-          phoneNumber: verification.data?.phone_number
+          phoneNumber: verification.data?.phone_number,
+          verifiedAt: new Date()
         },
         { new: true }
       );
@@ -221,6 +257,10 @@ exports.getPaymentStatus = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+    
     res.json({
       isSubscribed: user.isSubscribed,
       subscriptionStart: user.subscriptionStart,
@@ -229,6 +269,19 @@ exports.getPaymentStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Subscription status error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+// Nouvelle fonction pour obtenir l'historique des paiements
+exports.getPaymentHistory = async (req, res) => {
+  try {
+    const payments = await Payment.find({ userId: req.user._id })
+      .sort({ createdAt: -1 });
+    
+    res.json(payments);
+  } catch (error) {
+    console.error('Payment history error:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };

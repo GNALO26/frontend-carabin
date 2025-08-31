@@ -103,24 +103,37 @@ const PaymentPage = () => {
           </ul>
         </div>
 
-        <div className="mb-6">
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-            Numéro de téléphone (pour le paiement)
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Ex: 229 01 23 45 67 89 (sans espaces)"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Format: 229 suivis de votre numéro (sans espaces). Ex: 229012345678
-          </p>
-        </div>
-
+        // Dans PaymentPage.jsx
+              <div className="mb-6">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  Numéro de téléphone (pour le paiement)
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => {
+                    // Validation en temps réel pour le format béninois
+                    const value = e.target.value.replace(/\D/g, '');
+                    if (value.length <= 11) {
+                      setPhone(value);
+                    }
+                  }}
+                  placeholder="229XXXXXXXXX (ex: 229012345678)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  pattern="229[0-9]{8}"
+                  title="Format: 229 suivi de 8 chiffres (ex: 229012345678)"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: 229 suivis de 8 chiffres (ex: 229012345678)
+                </p>
+                {phone && !phone.match(/^229[0-9]{8}$/) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Format invalide. Utilisez: 229 suivis de 8 chiffres
+                  </p>
+                )}
+              </div>
         <div className="text-center mb-6">
           <p className="text-gray-600">Montant à payer :</p>
           <p className="text-3xl font-bold text-blue-800">{amount} FCFA</p>
