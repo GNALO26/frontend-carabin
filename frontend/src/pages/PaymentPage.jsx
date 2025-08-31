@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../services/api";
@@ -10,12 +10,41 @@ const PaymentPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const paymentCheckInterval = useRef(null);
 
   useEffect(() => {
     if (!user) {
       navigate("/login");
     }
+
+    // Nettoyer l'intervalle lors du démontage du composant
+    return () => {
+      if (paymentCheckInterval.current) {
+        clearInterval(paymentCheckInterval.current);
+      }
+    };
   }, [user, navigate]);
+
+  const formatPhoneNumber = (phone) => {
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Format déjà correct: 229 + 8 chiffres = 11 chiffres
+    if (cleaned.startsWith('229') && cleaned.length === 11) {
+      return cleaned;
+    }
+    
+    // Format local: 8 chiffres (ex: 61234567)
+    if (cleaned.length === 8) {
+      return '229' + cleaned;
+    }
+    
+    // Format local avec 0: 9 chiffres commençant par 0 (ex: 061234567)
+    if (cleaned.length === 9 && cleaned.startsWith('0')) {
+      return '229' + cleaned.substring(1);
+    }
+    
+    return cleaned;
+  };
 
   const handlePayment = async () => {
     try {
@@ -27,36 +56,13 @@ const PaymentPage = () => {
         return;
       }
 
-      // Format de numéro de téléphone pour CinetPay
-      const formatPhoneNumber = (phone) => {
-  // Nettoyer le numéro (supprimer espaces, caractères spéciaux)
-  const cleaned = phone.replace(/\D/g, '');
-  
-  // Si le numéro commence par 229, le retourner tel quel
-  if (cleaned.startsWith('229')) {
-    return cleaned;
-  }
-  
-  // Si le numéro a 8 chiffres et commence par 01, 02, etc., ajouter l'indicatif 229
-  if (cleaned.length === 8 && /^0[1-9]/.test(cleaned)) {
-    return '229' + cleaned.substring(1);
-  }
-  
-  // Si le numéro a 9 chiffres et commence par 01, 02, etc., ajouter l'indicatif 229 (en gardant le 0)
-  if (cleaned.length === 9 && /^0[1-9]/.test(cleaned)) {
-    return '229' + cleaned.substring(1);
-  }
-  
-  // Si le numéro a 10 chiffres et commence par 229, le retourner
-  if (cleaned.length === 10 && cleaned.startsWith('229')) {
-    return cleaned;
-  }
-  
-  // Retourner le numéro original si le format n'est pas reconnu
-  return cleaned;
-};
-
       const formattedPhone = formatPhoneNumber(phone);
+
+      // Validation finale pour CinetPay: doit être 229 + 8 chiffres
+      if (!formattedPhone.match(/^229[0-9]{8}$/)) {
+        setError("Format de numéro invalide. Le numéro doit avoir 11 chiffres: 229 + 8 chiffres (ex: 22961234567)");
+        return;
+      }
 
       // Appel API pour initier le paiement
       const { data } = await API.post("/payment/initiate", {
@@ -66,7 +72,32 @@ const PaymentPage = () => {
       });
 
       if (data.success && data.payment_url) {
-        window.location.href = data.payment_url;
+        // Ouvrir dans une nouvelle fenêtre
+        const newWindow = window.open(data.payment_url, '_blank');
+        if (!newWindow) {
+          setError('Veuillez autoriser les pop-ups pour ce site');
+          return;
+        }
+        
+        // Vérifier périodiquement le statut du paiement
+        paymentCheckInterval.current = setInterval(async () => {
+          try {
+            const statusResponse = await API.post("/payment/verify", {
+              transactionId: data.transaction_id
+            });
+            
+            if (statusResponse.data.success) {
+              clearInterval(paymentCheckInterval.current);
+              navigate("/payment/success");
+            } else if (statusResponse.data.status === "REJECTED") {
+              clearInterval(paymentCheckInterval.current);
+              setError("Paiement échoué. Veuillez réessayer.");
+            }
+          } catch (err) {
+            console.error("Erreur vérification paiement:", err);
+          }
+        }, 5000); // Vérifier toutes les 5 secondes
+        
       } else {
         setError(data.error || "Impossible de générer le lien de paiement");
       }
@@ -102,36 +133,36 @@ const PaymentPage = () => {
             <li>Défis exclusifs</li>
           </ul>
         </div>
-              <div className="mb-6">
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Numéro de téléphone (pour le paiement)
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => {
-                    // Validation en temps réel pour le format béninois
-                    const value = e.target.value.replace(/\D/g, '');
-                    if (value.length <= 11) {
-                      setPhone(value);
-                    }
-                  }}
-                  placeholder="229XXXXXXXXX (ex: 229012345678)"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                  pattern="229[0-9]{8}"
-                  title="Format: 229 suivi de 8 chiffres (ex: 229012345678)"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Format: 229 suivis de 8 chiffres (ex: 229012345678)
-                </p>
-                {phone && !phone.match(/^229[0-9]{8}$/) && (
-                  <p className="text-xs text-red-500 mt-1">
-                    Format invalide. Utilisez: 229 suivis de 8 chiffres
-                  </p>
-                )}
-              </div>
+        
+        <div className="mb-6">
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+            Numéro de téléphone (pour le paiement)
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            value={phone}
+            onChange={(e) => {
+              // Validation en temps réel
+              const value = e.target.value.replace(/\D/g, '');
+              if (value.length <= 11) {
+                setPhone(value);
+              }
+            }}
+            placeholder="Ex: 22961234567 ou 061234567"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Formats acceptés: 22961234567 (11 chiffres) ou 061234567 (9 chiffres)
+          </p>
+          {phone && !phone.match(/^(229[0-9]{8}|0[0-9]{8})$/) && (
+            <p className="text-xs text-red-500 mt-1">
+              Format invalide. Utilisez: 22961234567 ou 061234567
+            </p>
+          )}
+        </div>
+        
         <div className="text-center mb-6">
           <p className="text-gray-600">Montant à payer :</p>
           <p className="text-3xl font-bold text-blue-800">{amount} FCFA</p>

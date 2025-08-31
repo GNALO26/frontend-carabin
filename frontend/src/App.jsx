@@ -46,6 +46,11 @@ function App() {
     };
 
     checkBackendHealth();
+    
+    // Vérifier périodiquement la santé du backend
+    const interval = setInterval(checkBackendHealth, 60000); // Toutes les minutes
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Si le backend est en erreur, afficher un message
@@ -55,6 +60,12 @@ function App() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Service temporairement indisponible</h1>
           <p className="text-gray-600">Veuillez réessayer dans quelques instants.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Réessayer
+          </button>
         </div>
       </div>
     );
