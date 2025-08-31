@@ -27,28 +27,34 @@ const PaymentPage = () => {
         return;
       }
 
-      // Formater le numéro de téléphone pour CinetPay
+      // Format de numéro de téléphone pour CinetPay
       const formatPhoneNumber = (phone) => {
-        const cleaned = phone.replace(/\D/g, '');
-        
-        // Si le numéro commence par 229, le retourner tel quel
-        if (cleaned.startsWith('229')) {
-          return cleaned;
-        }
-        
-        // Si le numéro a 10 chiffres et commence par 0, ajouter l'indicatif 229
-        if (cleaned.length === 10 && cleaned.startsWith('0')) {
-          return '229' + cleaned.substring(1);
-        }
-        
-        // Si le numéro a 9 chiffres (sans le 0), ajouter l'indicatif 229
-        if (cleaned.length === 9) {
-          return '229' + cleaned;
-        }
-        
-        // Retourner le numéro original si le format n'est pas reconnu
-        return cleaned;
-      };
+  // Nettoyer le numéro (supprimer espaces, caractères spéciaux)
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Si le numéro commence par 229, le retourner tel quel
+  if (cleaned.startsWith('229')) {
+    return cleaned;
+  }
+  
+  // Si le numéro a 8 chiffres et commence par 01, 02, etc., ajouter l'indicatif 229
+  if (cleaned.length === 8 && /^0[1-9]/.test(cleaned)) {
+    return '229' + cleaned.substring(1);
+  }
+  
+  // Si le numéro a 9 chiffres et commence par 01, 02, etc., ajouter l'indicatif 229 (en gardant le 0)
+  if (cleaned.length === 9 && /^0[1-9]/.test(cleaned)) {
+    return '229' + cleaned.substring(1);
+  }
+  
+  // Si le numéro a 10 chiffres et commence par 229, le retourner
+  if (cleaned.length === 10 && cleaned.startsWith('229')) {
+    return cleaned;
+  }
+  
+  // Retourner le numéro original si le format n'est pas reconnu
+  return cleaned;
+};
 
       const formattedPhone = formatPhoneNumber(phone);
 
@@ -106,12 +112,12 @@ const PaymentPage = () => {
             id="phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="Ex: 0123456789 ou 2250123456789"
+            placeholder="Ex: 229 01 23 45 67 89 (sans espaces)"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
           <p className="text-xs text-gray-500 mt-1">
-            Format: 229 suivis de votre numéro (sans espaces) ou 0 suivis de votre numéro
+            Format: 229 suivis de votre numéro (sans espaces). Ex: 229012345678
           </p>
         </div>
 

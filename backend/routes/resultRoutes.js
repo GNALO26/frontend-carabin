@@ -8,14 +8,19 @@ router.post('/', authMiddleware, async (req, res) => {
   try {
     const { quizId, score, totalQuestions, answers, timeTaken } = req.body;
 
+    // Validation des données requises
+    if (!quizId || score === undefined || !totalQuestions) {
+      return res.status(400).json({ error: 'Données manquantes pour sauvegarder le résultat' });
+    }
+
     const result = new Result({
       userId: req.user._id,
       quizId,
       score,
       totalQuestions,
-      answers,
-      timeTaken,
-      startTime: new Date(Date.now() - timeTaken * 1000), // Calcul du startTime
+      answers: answers || [],
+      timeTaken: timeTaken || 0,
+      startTime: new Date(Date.now() - (timeTaken || 0) * 1000),
       endTime: new Date()
     });
 
@@ -43,6 +48,7 @@ router.get('/user', authMiddleware, async (req, res) => {
 
     res.json(results);
   } catch (error) {
+    console.error('Erreur récupération résultats:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -53,10 +59,13 @@ router.get('/quiz/:quizId', authMiddleware, async (req, res) => {
     const results = await Result.find({ 
       userId: req.user._id, 
       quizId: req.params.quizId 
-    }).sort({ createdAt: -1 });
+    })
+    .populate('quizId', 'title category')
+    .sort({ createdAt: -1 });
 
     res.json(results);
   } catch (error) {
+    console.error('Erreur récupération résultats quiz:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -70,15 +79,23 @@ router.get('/stats', authMiddleware, async (req, res) => {
         $group: {
           _id: null,
           totalQuizzes: { $sum: 1 },
-          averageScore: { $avg: "$percentage" },
-          bestScore: { $max: "$percentage" },
-          passedCount: { $sum: { $cond: ["$passed", 1, 0] } } 
+          averageScore: { $avg: "$score" },
+          bestScore: { $max: "$score" },
+          totalTimeSpent: { $sum: "$timeTaken" }
         } 
       }
     ]);
 
-    res.json(stats[0] || { totalQuizzes: 0, averageScore: 0, bestScore: 0, passedCount: 0 });
+    const defaultStats = { 
+      totalQuizzes: 0, 
+      averageScore: 0, 
+      bestScore: 0, 
+      totalTimeSpent: 0 
+    };
+    
+    res.json(stats[0] || defaultStats);
   } catch (error) {
+    console.error('Erreur calcul statistiques:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

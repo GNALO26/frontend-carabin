@@ -7,7 +7,44 @@ const { sendAccessCode } = require('../services/emailService');
 exports.initiatePayment = async (req, res) => {
   try {
     const { amount, description, phone } = req.body;
-    const user = req.user; // L'utilisateur doit être attaché à la requête par le middleware d'authentification
+    const user = req.user;
+
+    // Validation du numéro de téléphone
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Le numéro de téléphone est requis'
+      });
+    }
+
+    // Formater le numéro pour le Bénin (229)
+    const formatPhoneNumber = (phone) => {
+      const cleaned = phone.replace(/\D/g, '');
+      
+      // Si le numéro commence par 229, le retourner tel quel
+      if (cleaned.startsWith('229')) {
+        return cleaned;
+      }
+      
+      // Si le numéro a 8 chiffres (format local Bénin: 01 XX XX XX)
+      if (cleaned.length === 8 && cleaned.startsWith('01')) {
+        return '229' + cleaned;
+      }
+      
+      // Si le numéro a 9 chiffres et commence par 0 (format local: 0X XX XX XX XX)
+      if (cleaned.length === 9 && cleaned.startsWith('0')) {
+        return '229' + cleaned.substring(1);
+      }
+      
+      // Si le numéro a 10 chiffres (format international sans +)
+      if (cleaned.length === 10 && cleaned.startsWith('229')) {
+        return cleaned;
+      }
+      
+      return cleaned;
+    };
+
+    const formattedPhone = formatPhoneNumber(phone);
 
     // Initier le paiement avec CinetPay
     const paymentData = await initiatePayment({
@@ -15,7 +52,7 @@ exports.initiatePayment = async (req, res) => {
       description: description || 'Abonnement Quiz de Carabin',
       userId: user._id.toString(),
       email: user.email,
-      phone: phone,
+      phone: formattedPhone,
       customer_name: user.name
     });
 
@@ -54,7 +91,7 @@ exports.initiatePayment = async (req, res) => {
     console.error('Payment initiation error:', error);
     res.status(500).json({ 
       success: false,
-      error: error.message 
+      error: error.message || 'Erreur lors de l\'initialisation du paiement'
     });
   }
 };
@@ -127,7 +164,7 @@ exports.verifyPayment = async (req, res) => {
     console.error('Payment verification error:', error);
     res.status(500).json({ 
       success: false,
-      error: error.message 
+      error: error.message || 'Erreur lors de la vérification du paiement'
     });
   }
 };

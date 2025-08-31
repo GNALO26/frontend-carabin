@@ -20,18 +20,6 @@ class ErrorBoundary extends React.Component {
       errorInfo: errorInfo
     });
     console.error('Error caught by boundary:', error, errorInfo);
-    
-    // Envoyer l'erreur à un service de tracking si nécessaire
-    if (process.env.NODE_ENV === 'production') {
-      // logErrorToService(error, errorInfo);
-    }
-  }
-
-  // Réinitialiser l'état d'erreur lorsque les props changent
-  componentDidUpdate(prevProps) {
-    if (prevProps.children !== this.props.children) {
-      this.setState({ hasError: false, error: null, errorInfo: null });
-    }
   }
 
   render() {
@@ -48,7 +36,7 @@ class ErrorBoundary extends React.Component {
               <pre className="mt-2 text-xs overflow-auto bg-gray-100 p-2 rounded">
                 {this.state.error && this.state.error.toString()}
                 <br />
-                {this.state.errorInfo.componentStack}
+                {this.state.errorInfo ? this.state.errorInfo.componentStack : 'Aucun détail supplémentaire'}
               </pre>
             </details>
             <button
