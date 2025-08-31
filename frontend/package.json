@@ -37,6 +37,6 @@
   "devDependencies": {
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.21",
-    "react-scripts": "^0.0.0"
+    "react-scripts": "^5.0.1"
   }
 }

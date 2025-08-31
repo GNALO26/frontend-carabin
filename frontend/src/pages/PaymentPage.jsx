@@ -102,8 +102,6 @@ const PaymentPage = () => {
             <li>Défis exclusifs</li>
           </ul>
         </div>
-
-        // Dans PaymentPage.jsx
               <div className="mb-6">
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Numéro de téléphone (pour le paiement)
