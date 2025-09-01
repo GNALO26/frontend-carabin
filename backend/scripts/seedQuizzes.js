@@ -108,23 +108,28 @@ async function seedFromDocx() {
       },
       {
         path: path.join(__dirname, '../uploads/tissu-epithelial1.docx'),
-        category: 'physiologie-respiratoire',
+        category: 'tissu-epithelial1',
         free: true
       },
       {
         path: path.join(__dirname, '../uploads/tissu-epithelial2.docx'),
-        category: 'physiologie-respiratoire',
+        category: 'tissu-epithelial2',
+        free: true
+      },
+      {
+        path: path.join(__dirname, '../uploads/tissu-conjonctif1.docx'),
+        category: 'tissu-conjonctif1',
         free: true
       },
       {
         path: path.join(__dirname, '../uploads/echange.docx'),
         category: 'echange',
-        free: false
+        free: true
       },
       {
         path: path.join(__dirname, '../uploads/physiologie-musculaire.docx'),
         category: 'physiologie-musculaire',
-        free: false
+        free: true
       }
       
     ];

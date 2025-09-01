@@ -24,7 +24,7 @@ const quizSchema = new mongoose.Schema({
     enum: [
       'tissu-epithelial1',
       'tissu-epithelial2', 
-      'tissu-conjonctif', 
+      'tissu-conjonctif1', 
       'tissu-cartilagineux', 
       'tissu-osseux', 
       'physiologie-renale',
