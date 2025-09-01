@@ -97,12 +97,22 @@ async function seedFromDocx() {
   try {
     const docxConfig = [
       {
-        path: path.join(__dirname, '../uploads/physiologie-musculaire.docx'),
-        category: 'physiologie-musculaire',
-        free: false
+        path: path.join(__dirname, '../uploads/physiologie-renale.docx'),
+        category: 'physiologie-renale',
+        free: true
       },
       {
         path: path.join(__dirname, '../uploads/physiologie-respiratoire.docx'),
+        category: 'physiologie-respiratoire',
+        free: true
+      },
+      {
+        path: path.join(__dirname, '../uploads/tissu-epithelial1.docx'),
+        category: 'physiologie-respiratoire',
+        free: true
+      },
+      {
+        path: path.join(__dirname, '../uploads/tissu-epithelial2.docx'),
         category: 'physiologie-respiratoire',
         free: true
       },
@@ -112,10 +122,11 @@ async function seedFromDocx() {
         free: false
       },
       {
-        path: path.join(__dirname, '../uploads/physiologie-renale.docx'),
-        category: 'physiologie-renale',
-        free: true
+        path: path.join(__dirname, '../uploads/physiologie-musculaire.docx'),
+        category: 'physiologie-musculaire',
+        free: false
       }
+      
     ];
 
     console.log('🗑 Suppression des anciens quizzes...');

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../services/api";
+import retryService from "../services/retryService";
 
 const PaymentPage = () => {
   const [amount] = useState(5000);
@@ -103,7 +104,17 @@ const PaymentPage = () => {
       }
     } catch (err) {
       console.error("Erreur paiement:", err);
-      setError(err.response?.data?.error || err.message || "Erreur lors de l'initialisation du paiement");
+      setError(err.message || "Erreur lors de l'initialisation du paiement");
+      
+      // Stocker la tentative de paiement échouée pour réessai
+      const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+      pendingPayments.push({
+        amount: 5000,
+        description: "Abonnement Quiz de Carabin Premium",
+        phone: phone,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
     } finally {
       setLoading(false);
     }

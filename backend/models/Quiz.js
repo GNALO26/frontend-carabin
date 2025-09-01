@@ -22,7 +22,8 @@ const quizSchema = new mongoose.Schema({
   category: { 
     type: String, 
     enum: [
-      'tissu-epithelial', 
+      'tissu-epithelial1',
+      'tissu-epithelial2', 
       'tissu-conjonctif', 
       'tissu-cartilagineux', 
       'tissu-osseux', 

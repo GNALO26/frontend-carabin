@@ -1,13 +1,10 @@
 import axios from 'axios';
 
-// Configuration de l'URL de base de l'API
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app/api';
 
 const API = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // Augmenté le timeout à 30 secondes
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,30 +24,41 @@ API.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Erreur configuration requête:', error);
+    return Promise.reject(error);
+  }
 );
-
-// Fonction pour attendre un délai
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Intercepteur pour gérer les erreurs globales
 API.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
+    
+    // Éviter les boucles infinies de réessai
+    if (originalRequest && originalRequest._retryCount) {
+      originalRequest._retryCount++;
+      if (originalRequest._retryCount > 3) {
+        return Promise.reject(error);
+      }
+    } else if (originalRequest) {
+      originalRequest._retryCount = 1;
+    }
     
     // Si erreur réseau ou absence de réponse, on réessaie
     if (!error.response && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
-      // Attendre 1 seconde avant de réessayer
-      await sleep(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
       return API(originalRequest);
     }
 
     // Si erreur serveur (5xx), on réessaie aussi
     if (error.response && error.response.status >= 500 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
-      await sleep(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
       return API(originalRequest);
     }
 
@@ -66,15 +74,22 @@ API.interceptors.response.use(
       return Promise.reject({ message: 'Non autorisé. Redirection vers la page de login.' });
     }
 
-    // Affichage détaillé de l'erreur côté console
-    console.error('Erreur API:', {
-      status: error.response ? error.response.status : 'No response',
-      data: error.response ? error.response.data : error.message,
-      url: originalRequest?.url,
-    });
-
     // Message d'erreur clair pour le frontend
-    const message = error.response?.data?.error || error.response?.data?.message || 'Erreur inconnue de l\'API';
+    const message = error.response?.data?.error || 
+                   error.response?.data?.message || 
+                   error.message || 
+                   'Erreur de connexion au serveur';
+    
+    // Log plus détaillé uniquement en développement
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Erreur API détaillée:', {
+        status: error.response ? error.response.status : 'No response',
+        data: error.response ? error.response.data : error.message,
+        url: originalRequest?.url,
+        config: error.config
+      });
+    }
+    
     return Promise.reject({ 
       message,
       status: error.response?.status,

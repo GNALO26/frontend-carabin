@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import retryService from "../services/retryService";
 
 const QuizPage = () => {
   const { id } = useParams();
@@ -18,8 +19,10 @@ const QuizPage = () => {
   const [showExplanations, setShowExplanations] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [timeTaken, setTimeTaken] = useState(0);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     setStartTime(new Date());
     
     const fetchQuiz = async () => {
@@ -44,7 +47,9 @@ const QuizPage = () => {
           }
         });
         
-        setQuiz({ ...quizData, questions: uniqueQuestions });
+        if (isMountedRef.current) {
+          setQuiz({ ...quizData, questions: uniqueQuestions });
+        }
       } catch (err) {
         if (err.response?.status === 403) {
           setRequiresSubscription(true);
@@ -53,11 +58,17 @@ const QuizPage = () => {
         }
         console.error(err);
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchQuiz();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [id, hasPremiumAccess]);
 
   // Chronomètre
@@ -129,7 +140,9 @@ const QuizPage = () => {
   };
 
   const saveQuizResult = async (finalScore, answersWithDetails) => {
-    try {
+    const requestKey = `quiz-result-${id}-${Date.now()}`;
+    
+    const saveRequest = async () => {
       await API.post('/results', {
         quizId: id,
         score: finalScore,
@@ -137,8 +150,28 @@ const QuizPage = () => {
         answers: answersWithDetails,
         timeTaken: timeTaken
       });
+    };
+
+    try {
+      // Essayer d'abord de sauvegarder normalement
+      await saveRequest();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde du résultat:", error);
+      
+      // Si échec, ajouter au service de réessai
+      retryService.addRequest(saveRequest, requestKey, 3);
+      
+      // Stocker localement pour réessai ultérieur
+      const pendingResults = JSON.parse(localStorage.getItem('pendingQuizResults') || '[]');
+      pendingResults.push({
+        quizId: id,
+        score: finalScore,
+        totalQuestions: quiz.questions.length,
+        answers: answersWithDetails,
+        timeTaken: timeTaken,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('pendingQuizResults', JSON.stringify(pendingResults));
     }
   };
 

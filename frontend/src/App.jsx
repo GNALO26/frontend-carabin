@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import API from './services/api';
+import RetryFailedRequests from './components/RetryFailedRequests';
 
 // Pages publiques & utilisateurs
 import HomePage from './pages/HomePage.jsx';
@@ -75,6 +76,7 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <Router>
+          <RetryFailedRequests />
           <Routes>
             {/* --------- Layout Public --------- */}
             <Route element={<Layout />}>
