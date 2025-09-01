@@ -20,7 +20,7 @@ const RetryFailedRequests = () => {
               timeTaken: result.timeTaken
             });
             
-            // Supprimer de la liste en cas de succès
+            // Supprimer de la liste en cas de succès (mieux)
             const updatedResults = pendingResults.filter(r => 
               r.timestamp !== result.timestamp
             );
