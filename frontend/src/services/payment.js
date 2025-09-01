@@ -99,7 +99,6 @@ export const paymentService = {
   formatPhoneNumber: (phone) => {
     const cleaned = phone.replace(/\D/g, '');
     
-    // Format Bénin: 229 + 8 chiffres (sans le 0 initial)
     if (cleaned.startsWith('229') && cleaned.length === 11) {
       return cleaned;
     }
