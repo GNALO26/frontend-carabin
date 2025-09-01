@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import API from '../services/api';
-import paymentService from '../services/paymentService';
 
 const AuthContext = createContext();
 
@@ -32,6 +31,19 @@ export const AuthProvider = ({ children }) => {
     }
     setIsLoading(false);
   }, []);
+
+  // Ajout de la fonction refreshUser
+  const refreshUser = async () => {
+    try {
+      const response = await API.get('/auth/me');
+      setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      return response.data.user;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      logout();
+    }
+  };
 
   const login = async (credentials) => {
     try {
@@ -91,10 +103,7 @@ export const AuthProvider = ({ children }) => {
       
       if (response.data.success) {
         // Rafraîchir les données utilisateur
-        const userResponse = await API.get('/auth/me');
-        setUser(userResponse.data.user);
-        localStorage.setItem('user', JSON.stringify(userResponse.data.user));
-        
+        await refreshUser();
         return { success: true, message: response.data.message };
       } else {
         return { success: false, error: response.data.error };
@@ -138,7 +147,8 @@ export const AuthProvider = ({ children }) => {
       register,
       logout,
       validateAccessCode,
-      hasPremiumAccess
+      hasPremiumAccess,
+      refreshUser // Ajout de la fonction refreshUser
     }}>
       {children}
     </AuthContext.Provider>

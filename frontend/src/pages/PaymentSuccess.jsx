@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import paymentService from "../services/paymentService";
+import paymentService from "../services/payment";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { refreshUser } = useAuth(); // Utilisation de refreshUser
 
   const token = searchParams.get("token");
 
@@ -28,8 +28,7 @@ const PaymentSuccess = () => {
           setMessage("Votre paiement a été traité avec succès");
           
           // Rafraîchir les informations utilisateur
-          const userResponse = await API.get('/auth/me');
-          localStorage.setItem('user', JSON.stringify(userResponse.data.user));
+          await refreshUser(); // Utilisation de refreshUser
         } else {
           setStatus("error");
           setMessage(result.message || "Erreur lors du traitement de votre paiement");
@@ -42,7 +41,7 @@ const PaymentSuccess = () => {
     };
 
     verifyPayment();
-  }, [token]);
+  }, [token, refreshUser]);
 
   if (status === "loading") {
     return (
