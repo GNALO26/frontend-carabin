@@ -6,67 +6,120 @@ import API from './services/api';
 import RetryFailedRequests from './components/RetryFailedRequests';
 
 // Pages publiques & utilisateurs
-import HomePage from './pages/HomePage.jsx';
-import QuizPage from './pages/QuizPage.jsx';
-import QuizListPage from './pages/QuizListPage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import PaymentPage from './pages/PaymentPage.jsx';
-import PaymentSuccess from './pages/PaymentSuccess.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
-import GeneratedQuizPage from './pages/GeneratedQuizPage.jsx';
+import HomePage from './pages/HomePage';
+import QuizPage from './pages/QuizPage';
+import QuizListPage from './pages/QuizListPage';
+import DashboardPage from './pages/DashboardPage';
+import PaymentPage from './pages/PaymentPage';
+import PaymentSuccess from './pages/PaymentSuccess';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import NotFoundPage from './pages/NotFoundPage';
+import GeneratedQuizPage from './pages/GeneratedQuizPage';
 
 // Pages Admin
-import AdminLoginPage from './pages/admin/LoginPage.jsx';
-import AdminDashboard from './pages/admin/DashboardPage.jsx';
-import QuizEditor from './pages/admin/QuizEditor.jsx';
-import AdminQuizzesPage from './pages/admin/QuizzesPage.jsx';
-import UsersPage from './pages/admin/UsersPage.jsx';
+import AdminLoginPage from './pages/admin/LoginPage';
+import AdminDashboard from './pages/admin/DashboardPage';
+import QuizEditor from './pages/admin/QuizEditor';
+import AdminQuizzesPage from './pages/admin/QuizzesPage';
+import UsersPage from './pages/admin/UsersPage';
 
 // Layouts
-import Layout from './components/layout/Layout.jsx';
-import AdminLayout from './components/layout/AdminLayout.jsx';
+import Layout from './components/layout/Layout';
+import AdminLayout from './components/layout/AdminLayout';
 
 // Routes sécurisées
-import PrivateRoute from './components/auth/PrivateRoute.jsx';
-import AdminRoute from './components/auth/AdminRoute.jsx';
+import PrivateRoute from './components/auth/PrivateRoute';
+import AdminRoute from './components/auth/AdminRoute';
+
+// Hooks personnalisés
+import { useIsMounted, useSafeTimeout } from './hooks';
 
 function App() {
-  const [backendStatus, setBackendStatus] = useState('loading'); // 'loading', 'healthy', 'error'
+  const [backendStatus, setBackendStatus] = useState('loading');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isMounted = useIsMounted();
+  const { safeSetTimeout, safeClearTimeout } = useSafeTimeout();
 
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
         await API.get('/health');
-        setBackendStatus('healthy');
+        if (isMounted.current) {
+          setBackendStatus('healthy');
+        }
       } catch (error) {
         console.error('Le backend est indisponible:', error);
-        setBackendStatus('error');
+        if (isMounted.current) {
+          setBackendStatus('error');
+        }
       }
     };
 
+    // Vérifier la connexion internet
+    const handleOnline = () => {
+      if (isMounted.current) {
+        setIsOnline(true);
+        // Re-vérifier la santé du backend quand la connexion revient
+        checkBackendHealth();
+      }
+    };
+    
+    const handleOffline = () => {
+      if (isMounted.current) {
+        setIsOnline(false);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Vérifier la santé du backend au chargement initial
     checkBackendHealth();
     
     // Vérifier périodiquement la santé du backend
-    const interval = setInterval(checkBackendHealth, 60000); // Toutes les minutes
-    
-    return () => clearInterval(interval);
-  }, []);
+    const healthCheckInterval = safeSetTimeout(() => {
+      checkBackendHealth();
+    }, 60000);
 
-  // Si le backend est en erreur, afficher un message
-  if (backendStatus === 'error') {
+    return () => {
+      safeClearTimeout(healthCheckInterval);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [isMounted, safeSetTimeout, safeClearTimeout]);
+
+  // Si le backend est en erreur ou pas de connexion internet
+  if (backendStatus === 'error' || !isOnline) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Service temporairement indisponible</h1>
-          <p className="text-gray-600">Veuillez réessayer dans quelques instants.</p>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            {!isOnline ? 'Connexion internet perdue' : 'Service temporairement indisponible'}
+          </h1>
+          <p className="text-gray-600">
+            {!isOnline 
+              ? 'Veuillez vérifier votre connexion internet et réessayer.' 
+              : 'Veuillez réessayer dans quelques instants.'}
+          </p>
           <button 
             onClick={() => window.location.reload()} 
             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             Réessayer
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Pendant le chargement initial
+  if (backendStatus === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Vérification de la connexion...</p>
         </div>
       </div>
     );

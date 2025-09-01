@@ -2,13 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useIsMounted, useApi, useSafeTimeout } from "../hooks";
 
 const QuizPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { hasPremiumAccess } = useAuth();
+  const isMounted = useIsMounted();
+  const { callApi, loading, error: apiError } = useApi();
+  const { safeSetTimeout, safeClearTimeout } = useSafeTimeout();
+  
   const [quiz, setQuiz] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [requiresSubscription, setRequiresSubscription] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -18,59 +22,69 @@ const QuizPage = () => {
   const [showExplanations, setShowExplanations] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [timeTaken, setTimeTaken] = useState(0);
-  const isMounted = useRef(true);
 
   useEffect(() => {
-    isMounted.current = true;
-    fetchQuiz();
-    return () => {
-      isMounted.current = false;
-    };
-  }, [id]);
-
-  const fetchQuiz = async () => {
-    try {
-      setLoading(true);
-      const response = await API.get(`/quizzes/${id}`);
-      if (isMounted.current) {
-        setQuiz(response.data);
-        setStartTime(new Date());
-      }
-    } catch (err) {
-      if (isMounted.current) {
-        if (err.response?.status === 403) {
-          setRequiresSubscription(true);
-        } else {
-          setError(err.response?.data?.error || "Erreur lors du chargement du quiz");
+    const fetchQuiz = async () => {
+      await callApi(
+        async () => {
+          const response = await API.get(`/quizzes/${id}`);
+          if (isMounted.current) {
+            setQuiz(response.data);
+            setStartTime(new Date());
+          }
+          return response;
+        },
+        {
+          onError: (err) => {
+            if (err.response?.status === 403) {
+              setRequiresSubscription(true);
+            } else {
+              setError(err.response?.data?.error || "Erreur lors du chargement du quiz");
+            }
+          }
         }
-      }
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      );
+    };
+
+    if (id) {
+      fetchQuiz();
     }
-  };
+
+    return () => {
+      // Nettoyage des timeouts
+      safeClearTimeout();
+    };
+  }, [id, isMounted, callApi, safeClearTimeout]);
 
   // Chronomètre
   useEffect(() => {
     let timer;
     if (startTime && !quizFinished) {
-      timer = setInterval(() => {
+      timer = safeSetTimeout(() => {
         if (isMounted.current) {
           setTimeTaken(Math.floor((new Date() - startTime) / 1000));
         }
       }, 1000);
     }
-    return () => clearInterval(timer);
-  }, [startTime, quizFinished]);
+    return () => {
+      if (timer) {
+        safeClearTimeout(timer);
+      }
+    };
+  }, [startTime, quizFinished, isMounted, safeSetTimeout, safeClearTimeout]);
 
   const handleAnswerSelect = (answerIndex) => {
+    if (!quiz || quizFinished) return;
+
     const newSelectedAnswers = [...selectedAnswers];
     const currentSelections = newSelectedAnswers[currentQuestionIndex] || [];
 
-    // Si la question est à choix multiple, on toggle la réponse
-    // Sinon, on remplace la sélection
-    if (quiz.questions[currentQuestionIndex].type === "multiple") {
+    // Vérifier si la question est à choix multiple
+    const currentQuestion = quiz.questions[currentQuestionIndex];
+    const isMultipleChoice = currentQuestion.type === "multiple";
+    
+    if (isMultipleChoice) {
+      // Pour les questions à choix multiple, on toggle la réponse
       if (currentSelections.includes(answerIndex)) {
         newSelectedAnswers[currentQuestionIndex] = currentSelections.filter(
           (ans) => ans !== answerIndex
@@ -79,6 +93,7 @@ const QuizPage = () => {
         newSelectedAnswers[currentQuestionIndex] = [...currentSelections, answerIndex];
       }
     } else {
+      // Pour les questions à choix unique, on remplace la sélection
       newSelectedAnswers[currentQuestionIndex] = [answerIndex];
     }
 
@@ -94,18 +109,32 @@ const QuizPage = () => {
     }
   };
 
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
   const calculateScore = () => {
     let calculatedScore = 0;
     const answersWithDetails = [];
 
     quiz.questions.forEach((question, index) => {
       const userAnswers = selectedAnswers[index] || [];
-      const correctAnswers = question.correctAnswers;
+      const correctAnswers = question.correctAnswers || [];
 
       // Vérifier si les réponses sont correctes
-      const isCorrect =
-        userAnswers.length === correctAnswers.length &&
-        userAnswers.every((answer) => correctAnswers.includes(answer));
+      let isCorrect = false;
+      
+      if (question.type === "multiple") {
+        // Pour les questions à choix multiple, on vérifie que toutes les réponses correctes sont sélectionnées
+        isCorrect = 
+          userAnswers.length === correctAnswers.length &&
+          userAnswers.every((answer) => correctAnswers.includes(answer));
+      } else {
+        // Pour les questions à choix unique, on vérifie que la réponse est correcte
+        isCorrect = userAnswers.length === 1 && correctAnswers.includes(userAnswers[0]);
+      }
 
       if (isCorrect) {
         calculatedScore++;
@@ -115,6 +144,7 @@ const QuizPage = () => {
         questionId: question._id,
         selectedOptions: userAnswers,
         isCorrect,
+        timeTaken: 0
       });
     });
 
@@ -123,17 +153,23 @@ const QuizPage = () => {
   };
 
   const saveQuizResult = async (finalScore, answersWithDetails) => {
-    try {
-      await API.post("/results", {
-        quizId: id,
-        score: finalScore,
-        totalQuestions: quiz.questions.length,
-        answers: answersWithDetails,
-        timeTaken: timeTaken,
-      });
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde du résultat:", error);
-    }
+    await callApi(
+      async () => {
+        const response = await API.post("/results", {
+          quizId: id,
+          score: finalScore,
+          totalQuestions: quiz.questions.length,
+          answers: answersWithDetails,
+          timeTaken: timeTaken
+        });
+        return response;
+      },
+      {
+        onError: (err) => {
+          console.error("Erreur lors de la sauvegarde du résultat:", err);
+        }
+      }
+    );
   };
 
   if (loading) {
@@ -164,11 +200,19 @@ const QuizPage = () => {
     );
   }
 
-  if (error) {
+  if (apiError || error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-          <p>{error}</p>
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl text-center">
+          <div className="text-red-500 text-6xl mb-4">❌</div>
+          <h1 className="text-2xl font-bold text-red-800 mb-4">Erreur</h1>
+          <p className="text-gray-600 mb-6">{apiError?.message || error}</p>
+          <button
+            onClick={() => navigate("/quizzes")}
+            className="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Retour aux quiz
+          </button>
         </div>
       </div>
     );
@@ -191,13 +235,9 @@ const QuizPage = () => {
           <div className="bg-white rounded-lg shadow-md p-8">
             <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">Quiz Terminé!</h1>
             <div className="text-center mb-8">
-              <p className="text-2xl font-semibold">
-                Votre score: {score}/{quiz.questions.length}
-              </p>
+              <p className="text-2xl font-semibold">Votre score: {score}/{quiz.questions.length}</p>
               <p className="text-lg text-gray-600 mt-2">
-                {score >= quiz.questions.length * 0.7
-                  ? "Félicitations! Vous avez réussi!"
-                  : "Essayez encore pour améliorer votre score."}
+                {score >= quiz.questions.length * 0.7 ? "Félicitations! Vous avez réussi!" : "Essayez encore pour améliorer votre score."}
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 Temps passé: {Math.floor(timeTaken / 60)}m {timeTaken % 60}s
@@ -221,9 +261,17 @@ const QuizPage = () => {
               <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-4">Explications</h2>
                 {quiz.questions.map((question, index) => (
-                  <div key={index} className="mb-6">
-                    <h3 className="text-lg font-semibold">{question.text}</h3>
-                    <p className="text-gray-700">{question.explanation}</p>
+                  <div key={index} className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2">{question.text}</h3>
+                    <p className="text-gray-700 mb-2">
+                      <strong>Réponse(s) correcte(s):</strong>{" "}
+                      {question.correctAnswers.map(idx => question.options[idx]).join(", ")}
+                    </p>
+                    {question.explanation && (
+                      <p className="text-gray-700">
+                        <strong>Explication:</strong> {question.explanation}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -235,6 +283,8 @@ const QuizPage = () => {
   }
 
   const currentQuestion = quiz.questions[currentQuestionIndex];
+  const currentSelections = selectedAnswers[currentQuestionIndex] || [];
+  const isMultipleChoice = currentQuestion.type === "multiple";
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -252,6 +302,9 @@ const QuizPage = () => {
             </div>
 
             <h2 className="text-xl font-semibold mb-4">{currentQuestion.text}</h2>
+            {isMultipleChoice && (
+              <p className="text-sm text-gray-500 mb-4">(Sélection multiple autorisée)</p>
+            )}
 
             <div className="space-y-3">
               {currentQuestion.options.map((option, index) => (
@@ -259,12 +312,31 @@ const QuizPage = () => {
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
                   className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                    (selectedAnswers[currentQuestionIndex] || []).includes(index)
+                    currentSelections.includes(index)
                       ? "bg-blue-100 border-blue-500"
                       : "border-gray-300 hover:border-blue-300"
                   }`}
                 >
-                  {option}
+                  <div className="flex items-center">
+                    {isMultipleChoice ? (
+                      <div className={`w-5 h-5 border rounded mr-3 flex items-center justify-center ${
+                        currentSelections.includes(index) 
+                          ? "bg-blue-500 border-blue-500 text-white" 
+                          : "border-gray-400"
+                      }`}>
+                        {currentSelections.includes(index) && "✓"}
+                      </div>
+                    ) : (
+                      <div className={`w-5 h-5 border rounded-full mr-3 flex items-center justify-center ${
+                        currentSelections.includes(index) 
+                          ? "bg-blue-500 border-blue-500 text-white" 
+                          : "border-gray-400"
+                      }`}>
+                        {currentSelections.includes(index) && "•"}
+                      </div>
+                    )}
+                    <span>{option}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -272,15 +344,16 @@ const QuizPage = () => {
 
           <div className="flex justify-between">
             <button
-              onClick={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
+              onClick={handlePreviousQuestion}
               disabled={currentQuestionIndex === 0}
-              className="bg-gray-500 text-white py-2 px-4 rounded-lg disabled:opacity-50"
+              className="bg-gray-500 text-white py-2 px-4 rounded-lg disabled:opacity-50 hover:bg-gray-600 transition-colors"
             >
               Précédent
             </button>
             <button
               onClick={handleNextQuestion}
-              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+              disabled={currentSelections.length === 0}
+              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {currentQuestionIndex === quiz.questions.length - 1 ? "Terminer" : "Suivant"}
             </button>
