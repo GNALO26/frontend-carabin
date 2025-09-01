@@ -1,8 +1,30 @@
 const Payment = require('../models/Payment');
 const User = require('../models/User');
 const Activity = require('../models/Activity');
-const { initiatePayment, verifyPayment } = require('../services/paymentService');
+const { initiatePayment, verifyPayment } = require('../services/paydunyaService');
 const { sendAccessCode } = require('../services/emailService');
+
+// Fonction pour générer un code d'accès unique
+const generateUniqueAccessCode = async () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code;
+  let isUnique = false;
+  
+  while (!isUnique) {
+    code = '';
+    for (let i = 0; i < 8; i++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    
+    // Vérifier si le code existe déjà
+    const existingPayment = await Payment.findOne({ accessCode: code });
+    if (!existingPayment) {
+      isUnique = true;
+    }
+  }
+  
+  return code;
+};
 
 exports.initiatePayment = async (req, res) => {
   try {
@@ -21,7 +43,6 @@ exports.initiatePayment = async (req, res) => {
     const cleanedPhone = phone.replace(/\D/g, '');
     
     // Validation spécifique pour les numéros béninois
-    // Format attendu: 229 + 8 chiffres (ex: 22901234567)
     let formattedPhone;
     
     if (cleanedPhone.startsWith('229') && cleanedPhone.length === 11) {
@@ -33,17 +54,11 @@ exports.initiatePayment = async (req, res) => {
     } else if (cleanedPhone.length === 9 && cleanedPhone.startsWith('0')) {
       // Format local avec 0: 9 chiffres commençant par 0 (ex: 001234567)
       formattedPhone = '229' + cleanedPhone.substring(1);
-    } else if (cleanedPhone.length === 10 && cleanedPhone.startsWith('229')) {
-      // Format avec 10 chiffres (trop court)
-      return res.status(400).json({
-        success: false,
-        error: 'Numéro invalide. Format attendu: 229 suivis de 8 chiffres (ex: 22901234567)'
-      });
     } else {
       // Format non reconnu
       return res.status(400).json({
         success: false,
-        error: 'Format de numéro invalide. Utilisez le format: 22901234567'
+        error: 'Format de numéro invalide. Utilisez le format: 22901234567 ou 01234567'
       });
     }
 
@@ -57,7 +72,7 @@ exports.initiatePayment = async (req, res) => {
 
     console.log('Tentative de paiement avec le numéro:', formattedPhone);
 
-    // Initier le paiement avec CinetPay
+    // Initier le paiement avec PayDunya
     const paymentData = await initiatePayment({
       amount: amount || 5000,
       description: description || 'Abonnement Quiz de Carabin Premium',
@@ -73,10 +88,11 @@ exports.initiatePayment = async (req, res) => {
       email: user.email,
       amount: amount || 5000,
       description: description || 'Abonnement Quiz de Carabin Premium',
-      paymentId: paymentData.payment_id,
-      transactionId: paymentData.transaction_id,
+      paymentId: paymentData.token,
+      transactionId: paymentData.token,
       status: 'pending',
-      phoneNumber: formattedPhone
+      phoneNumber: formattedPhone,
+      provider: 'paydunya'
     });
 
     await payment.save();
@@ -89,16 +105,17 @@ exports.initiatePayment = async (req, res) => {
       description: `A initié un paiement de ${amount || 5000} FCFA pour l'abonnement premium`,
       data: {
         amount: amount || 5000,
-        transactionId: paymentData.transaction_id,
-        phone: formattedPhone
+        transactionId: paymentData.token,
+        phone: formattedPhone,
+        provider: 'paydunya'
       }
     });
     await activity.save();
     
     res.json({
       success: true,
-      payment_url: paymentData.payment_url,
-      transaction_id: paymentData.transaction_id
+      payment_url: paymentData.invoice_url,
+      token: paymentData.token
     });
   } catch (error) {
     console.error('Payment initiation error:', error);
@@ -111,24 +128,30 @@ exports.initiatePayment = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const { transactionId } = req.body;
+    const { token } = req.body;
 
-    if (!transactionId) {
+    if (!token) {
       return res.status(400).json({
         success: false,
-        error: 'ID de transaction requis'
+        error: 'Token de paiement requis'
       });
     }
 
-    const verification = await verifyPayment(transactionId);
+    const verification = await verifyPayment(token);
     
+    // Adapter la réponse de PayDunya à votre format
+    let status = 'pending';
+    if (verification.status === 'completed') {
+      status = 'completed';
+    } else if (verification.status === 'cancelled') {
+      status = 'failed';
+    }
+
     // Mettre à jour le statut du paiement
     const payment = await Payment.findOneAndUpdate(
-      { transactionId },
+      { transactionId: token },
       { 
-        status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
-        operator: verification.data?.operator_id,
-        phoneNumber: verification.data?.phone_number,
+        status: status,
         verifiedAt: new Date()
       },
       { new: true }
@@ -142,12 +165,19 @@ exports.verifyPayment = async (req, res) => {
     }
 
     // Si le paiement est accepté, mettre à jour l'utilisateur
-    if (verification.status === 'ACCEPTED') {
-      await User.findByIdAndUpdate(payment.userId, {
-        isSubscribed: true,
-        subscriptionStart: new Date(),
-        subscriptionEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 jours
+    if (status === 'completed') {
+      // Générer un code d'accès unique
+      const accessCode = await generateUniqueAccessCode();
+      
+      // Mettre à jour le paiement avec le code d'accès
+      await Payment.findByIdAndUpdate(payment._id, {
+        accessCode: accessCode,
+        accessExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
+        isCodeUsed: false
       });
+
+      // Envoyer le code d'accès par email
+      await sendAccessCode(payment.email, accessCode, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 
       // Enregistrer l'activité de paiement réussi
       const activity = new Activity({
@@ -158,15 +188,10 @@ exports.verifyPayment = async (req, res) => {
         data: {
           amount: payment.amount,
           transactionId: payment.transactionId,
-          operator: verification.data?.operator_id
+          provider: 'paydunya'
         }
       });
       await activity.save();
-
-      // Envoyer le code d'accès par email si nécessaire
-      if (payment.accessCode) {
-        await sendAccessCode(payment.email, payment.accessCode);
-      }
     } else {
       // Enregistrer l'activité de paiement échoué
       const activity = new Activity({
@@ -177,16 +202,17 @@ exports.verifyPayment = async (req, res) => {
         data: {
           amount: payment.amount,
           transactionId: payment.transactionId,
-          reason: verification.message
+          reason: verification.response_text,
+          provider: 'paydunya'
         }
       });
       await activity.save();
     }
 
     res.json({
-      success: verification.status === 'ACCEPTED',
-      status: verification.status,
-      message: verification.message,
+      success: status === 'completed',
+      status: status,
+      message: verification.response_text,
       payment: payment
     });
   } catch (error) {
@@ -198,48 +224,142 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
-exports.handleNotification = async (req, res) => {
+// Utiliser un code d'accès
+exports.useAccessCode = async (req, res) => {
   try {
-    const { transaction_id, cpm_result, cpm_signature } = req.body;
+    const { code } = req.body;
+    const user = req.user;
 
-    console.log('Notification reçue de CinetPay:', {
-      transaction_id,
-      cpm_result,
-      cpm_signature
+    // Trouver le paiement avec ce code
+    const payment = await Payment.findOne({ 
+      accessCode: code,
+      status: 'completed'
     });
 
-    if (transaction_id) {
-      const verification = await verifyPayment(transaction_id);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Code d\'accès invalide'
+      });
+    }
+
+    // Vérifier si le code a déjà été utilisé
+    if (payment.isCodeUsed) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ce code a déjà été utilisé'
+      });
+    }
+
+    // Vérifier si le code a expiré
+    if (payment.accessExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ce code a expiré'
+      });
+    }
+
+    // Vérifier que l'utilisateur est bien le propriétaire du code
+    if (payment.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Ce code ne vous appartient pas'
+      });
+    }
+
+    // Marquer le code comme utilisé
+    await Payment.findByIdAndUpdate(payment._id, {
+      isCodeUsed: true,
+      usedAt: new Date(),
+      status: 'used'
+    });
+
+    // Activer l'abonnement de l'utilisateur
+    await User.findByIdAndUpdate(user._id, {
+      isSubscribed: true,
+      subscriptionStart: new Date(),
+      subscriptionEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 jours
+    });
+
+    // Enregistrer l'activité d'utilisation du code
+    const activity = new Activity({
+      userId: user._id,
+      type: 'access_code_used',
+      title: 'Code d\'accès utilisé',
+      description: `A utilisé son code d'accès pour activer l'abonnement`,
+      data: {
+        code: code,
+        paymentId: payment._id
+      }
+    });
+    await activity.save();
+
+    res.json({
+      success: true,
+      message: 'Code validé avec succès. Votre abonnement est maintenant actif.'
+    });
+  } catch (error) {
+    console.error('Use access code error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message || 'Erreur lors de l\'utilisation du code'
+    });
+  }
+};
+
+// Webhook pour les notifications PayDunya
+exports.handlePaydunyaWebhook = async (req, res) => {
+  try {
+    const signature = req.headers['paydunya-signature'];
+    const payload = req.body;
+
+    // Vérifier la signature pour s'assurer que la requête vient de PayDunya
+    if (!verifySignature(payload, signature)) {
+      console.error('Signature invalide reçue de PayDunya');
+      return res.status(401).send('Signature invalide');
+    }
+
+    console.log('Notification reçue de PayDunya:', payload);
+
+    // Traiter différentes notifications selon le type
+    if (payload.type === 'invoice.completed' && payload.data && payload.data.token) {
+      const verification = await verifyPayment(payload.data.token);
       
       const payment = await Payment.findOneAndUpdate(
-        { transactionId: transaction_id },
+        { transactionId: payload.data.token },
         { 
-          status: verification.status === 'ACCEPTED' ? 'completed' : 'failed',
-          operator: verification.data?.operator_id,
-          phoneNumber: verification.data?.phone_number,
+          status: verification.status === 'completed' ? 'completed' : 'failed',
           verifiedAt: new Date()
         },
         { new: true }
       );
 
       // Si le paiement est accepté, mettre à jour l'utilisateur
-      if (verification.status === 'ACCEPTED' && payment) {
-        await User.findByIdAndUpdate(payment.userId, {
-          isSubscribed: true,
-          subscriptionStart: new Date(),
-          subscriptionEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 jours
+      if (verification.status === 'completed' && payment) {
+        // Générer un code d'accès unique
+        const accessCode = await generateUniqueAccessCode();
+        
+        // Mettre à jour le paiement avec le code d'accès
+        await Payment.findByIdAndUpdate(payment._id, {
+          accessCode: accessCode,
+          accessExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
+          isCodeUsed: false
         });
+
+        // Envoyer le code d'accès par email
+        await sendAccessCode(payment.email, accessCode, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 
         // Enregistrer l'activité de paiement réussi via webhook
         const activity = new Activity({
           userId: payment.userId,
           type: 'payment_success',
           title: 'Paiement réussi (webhook)',
-          description: `A souscrit à l'abonnement premium via notification`,
+          description: `A souscrit à l'abonnement premium via notification PayDunya`,
           data: {
             amount: payment.amount,
             transactionId: payment.transactionId,
-            source: 'webhook'
+            source: 'webhook',
+            provider: 'paydunya'
           }
         });
         await activity.save();
@@ -248,11 +368,12 @@ exports.handleNotification = async (req, res) => {
 
     res.status(200).send('OK');
   } catch (error) {
-    console.error('Payment notification error:', error);
+    console.error('Paydunya webhook error:', error);
     res.status(500).send('ERROR');
   }
 };
 
+// Vérifier le statut d'abonnement de l'utilisateur
 exports.getPaymentStatus = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -273,7 +394,7 @@ exports.getPaymentStatus = async (req, res) => {
   }
 };
 
-// Nouvelle fonction pour obtenir l'historique des paiements
+// Obtenir l'historique des paiements
 exports.getPaymentHistory = async (req, res) => {
   try {
     const payments = await Payment.find({ userId: req.user._id })

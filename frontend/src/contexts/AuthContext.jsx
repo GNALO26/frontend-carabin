@@ -1,146 +1,127 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import API from '../services/api';
+import paymentService from '../services/paymentService';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [accessExpiry, setAccessExpiry] = useState(null);
 
-  // Fonction pour récupérer le token
-  const getToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  // Rafraîchir les données utilisateur
-  const refreshUserData = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        console.log('Aucun token disponible pour le rafraîchissement');
-        return;
-      }
-
-      const response = await api.get('/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data) {
-        setUser(response.data.user);
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData));
         
-        if (response.data.user.subscription?.expiryDate) {
-          setAccessExpiry(new Date(response.data.user.subscription.expiryDate));
-        }
-      }
-    } catch (error) {
-      console.error('Erreur de rafraîchissement:', error);
-      if (error.response?.status === 401) {
-        // Token invalide ou expiré, déconnecter l'utilisateur
+        // Vérifier la validité du token
+        API.get('/auth/me')
+          .then(response => {
+            setUser(response.data.user);
+          })
+          .catch(error => {
+            console.error('Token validation failed:', error);
+            logout();
+          });
+      } catch (error) {
+        console.error('Error parsing user data:', error);
         logout();
       }
     }
-  };
-
-  // Charger l'utilisateur si token présent
-  useEffect(() => {
-    const loadUser = async () => {
-      const token = getToken();
-      if (token) {
-        try {
-          const response = await api.get('/auth/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-
-          setUser(response.data.user);
-          if (response.data.user.subscription?.expiryDate) {
-            setAccessExpiry(new Date(response.data.user.subscription.expiryDate));
-          }
-        } catch (error) {
-          console.error('Erreur de chargement utilisateur:', error);
-          if (error.response?.status === 401) {
-            logout();
-          }
-        }
-      }
-      setIsLoading(false);
-    };
-
-    loadUser();
+    setIsLoading(false);
   }, []);
 
-  // Connexion
   const login = async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      localStorage.setItem('token', response.data.token);
-      setUser(response.data.user);
-      return response.data;
+      const response = await API.post('/auth/login', credentials);
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        return { success: true };
+      } else {
+        return { success: false, error: 'No token received' };
+      }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
-      throw error.response?.data || { message: 'Erreur de connexion' };
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erreur de connexion' 
+      };
     }
   };
 
-  // Inscription
   const register = async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
-      localStorage.setItem('token', response.data.token);
-      setUser(response.data.user);
-      return response.data;
-    } catch (error) {
-      console.error('Erreur d\'inscription:', error);
-      throw error.response?.data || { message: 'Erreur d\'inscription' };
-    }
-  };
-
-  // Validation code d'accès
-  const validateAccessCode = async (accessCode) => {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('Token non disponible');
+      const response = await API.post('/auth/register', userData);
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        return { success: true };
+      } else {
+        return { success: false, error: 'No token received' };
       }
-
-      const response = await api.post('/auth/validate-access-code', { accessCode }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      // Rafraîchir les données après validation
-      await refreshUserData();
-
-      return response.data;
     } catch (error) {
-      console.error('Erreur validation code:', error);
-      throw error.response?.data || { message: 'Erreur validation code' };
+      console.error('Registration error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erreur d\'inscription' 
+      };
     }
   };
 
-  // Déconnexion
   const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    setAccessExpiry(null);
+    API.post('/auth/logout')
+      .catch(error => console.error('Logout error:', error))
+      .finally(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+      });
   };
 
-  // Vérification accès premium
-const hasPremiumAccess = () => {
-  if (!user) return false;
-  
-  // Vérifier l'abonnement avec les deux structures possibles
-  if (user.subscriptionEnd) {
-    return new Date() < new Date(user.subscriptionEnd);
-  }
-  if (user.subscription && user.subscription.expiryDate) 
-    {
-    return new Date() < new Date(user.subscription.expiryDate);
+  const validateAccessCode = async (code) => {
+    try {
+      const response = await API.post('/payment/use-access-code', { code });
+      
+      if (response.data.success) {
+        // Rafraîchir les données utilisateur
+        const userResponse = await API.get('/auth/me');
+        setUser(userResponse.data.user);
+        localStorage.setItem('user', JSON.stringify(userResponse.data.user));
+        
+        return { success: true, message: response.data.message };
+      } else {
+        return { success: false, error: response.data.error };
+      }
+    } catch (error) {
+      console.error('Access code validation error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erreur de validation du code' 
+      };
     }
-  
-  return user.isSubscribed === true;
-};
+  };
 
-  // Pendant chargement -> écran "loading"
+  const hasPremiumAccess = () => {
+    if (!user) return false;
+    
+    if (user.subscriptionEnd) {
+      return new Date() < new Date(user.subscriptionEnd);
+    }
+    
+    if (user.subscription && user.subscription.expiryDate) {
+      return new Date() < new Date(user.subscription.expiryDate);
+    }
+    
+    return user.isSubscribed === true;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -153,13 +134,11 @@ const hasPremiumAccess = () => {
     <AuthContext.Provider value={{
       user,
       isLoading,
-      accessExpiry,
       login,
       register,
-      validateAccessCode,
       logout,
-      hasPremiumAccess,
-      refreshUserData
+      validateAccessCode,
+      hasPremiumAccess
     }}>
       {children}
     </AuthContext.Provider>
@@ -169,7 +148,7 @@ const hasPremiumAccess = () => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth doit être utilisé within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

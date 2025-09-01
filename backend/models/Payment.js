@@ -16,8 +16,7 @@ const paymentSchema = new mongoose.Schema({
     default: 5000 
   },
   operator: { 
-    type: String, 
-    required: true 
+    type: String 
   },
   phoneNumber: { 
     type: String, 
@@ -34,21 +33,34 @@ const paymentSchema = new mongoose.Schema({
   },
   provider: { 
     type: String, 
-    default: 'cinetpay' 
+    default: 'paydunya' 
   },
   status: { 
     type: String, 
-    enum: ['pending', 'completed', 'failed'], 
+    enum: ['pending', 'completed', 'failed', 'used'],
     default: 'pending' 
   },
   accessCode: { 
-    type: String 
+    type: String,
+    unique: true
   },
   accessExpiry: { 
     type: Date 
+  },
+  isCodeUsed: {
+    type: Boolean,
+    default: false
+  },
+  usedAt: {
+    type: Date
   }
 }, {
   timestamps: true
 });
+
+// Index pour optimiser les recherches
+paymentSchema.index({ accessCode: 1 });
+paymentSchema.index({ userId: 1, isCodeUsed: 1 });
+paymentSchema.index({ transactionId: 1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

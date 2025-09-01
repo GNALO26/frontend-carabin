@@ -15,12 +15,14 @@ const checkSubscription = async (req, res, next) => {
 
     // Vérifier si l'utilisateur a un abonnement actif
     const hasActiveSubscription = user.isSubscribed && 
+                                 user.subscriptionEnd &&
                                  new Date() < new Date(user.subscriptionEnd);
 
     if (!hasActiveSubscription) {
       return res.status(403).json({ 
         error: "Accès réservé aux abonnés premium",
-        message: "Vous devez souscrire à un abonnement pour accéder à ce contenu"
+        message: "Vous devez souscrire à un abonnement pour accéder à ce contenu",
+        code: "SUBSCRIPTION_REQUIRED"
       });
     }
 

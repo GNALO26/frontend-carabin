@@ -1,38 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import API from "../services/api";
+import paymentService from "../services/paymentService";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  const { user } = useAuth();
 
-  const transactionId = searchParams.get("transaction_id");
+  const token = searchParams.get("token");
 
   useEffect(() => {
     const verifyPayment = async () => {
-      if (!transactionId) {
+      if (!token) {
         setStatus("error");
         setMessage("Paramètres de paiement manquants");
         return;
       }
 
       try {
-        const { data } = await API.post("/payment/verify", {
-          transactionId
-        });
+        const result = await paymentService.verifyPayment(token);
 
-        if (data.success) {
+        if (result.success) {
           setStatus("success");
           setMessage("Votre paiement a été traité avec succès");
+          
           // Rafraîchir les informations utilisateur
-          await refreshUser();
+          const userResponse = await API.get('/auth/me');
+          localStorage.setItem('user', JSON.stringify(userResponse.data.user));
         } else {
           setStatus("error");
-          setMessage(data.message || "Erreur lors du traitement de votre paiement");
+          setMessage(result.message || "Erreur lors du traitement de votre paiement");
         }
       } catch (error) {
         console.error("Erreur de vérification du paiement:", error);
@@ -42,7 +42,7 @@ const PaymentSuccess = () => {
     };
 
     verifyPayment();
-  }, [transactionId, refreshUser]);
+  }, [token]);
 
   if (status === "loading") {
     return (

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import API from "../services/api";
+import paymentService from "../services/paymentService";
 
 const PaymentPage = () => {
   const [amount] = useState(5000);
@@ -10,39 +10,18 @@ const PaymentPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
-  const paymentCheckInterval = useRef(null);
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    isMounted.current = true;
-    
-    if (!user) {
-      navigate("/login");
-    }
-
-    // Nettoyer l'intervalle lors du démontage du composant
-    return () => {
-      isMounted.current = false;
-      if (paymentCheckInterval.current) {
-        clearInterval(paymentCheckInterval.current);
-      }
-    };
-  }, [user, navigate]);
 
   const formatPhoneNumber = (phone) => {
     const cleaned = phone.replace(/\D/g, '');
     
-    // Format déjà correct: 229 + 8 chiffres = 11 chiffres
     if (cleaned.startsWith('229') && cleaned.length === 11) {
       return cleaned;
     }
     
-    // Format local: 8 chiffres (ex: 61234567)
     if (cleaned.length === 8) {
       return '229' + cleaned;
     }
     
-    // Format local avec 0: 9 chiffres commençant par 0 (ex: 061234567)
     if (cleaned.length === 9 && cleaned.startsWith('0')) {
       return '229' + cleaned.substring(1);
     }
@@ -62,62 +41,29 @@ const PaymentPage = () => {
 
       const formattedPhone = formatPhoneNumber(phone);
 
-      // Validation finale pour CinetPay: doit être 229 + 8 chiffres
       if (!formattedPhone.match(/^229[0-9]{8}$/)) {
         setError("Format de numéro invalide. Le numéro doit avoir 11 chiffres: 229 + 8 chiffres (ex: 22961234567)");
         return;
       }
 
-      // Appel API pour initier le paiement
-      const { data } = await API.post("/payment/initiate", {
+      // Appel API pour initier le paiement avec PayDunya
+      const result = await paymentService.initiatePayment({
         amount: 5000,
         description: "Abonnement Quiz de Carabin Premium",
         phone: formattedPhone
       });
 
-      if (data.success && data.payment_url) {
-        // Ouvrir dans une nouvelle fenêtre
-        const newWindow = window.open(data.payment_url, '_blank');
-        if (!newWindow) {
-          setError('Veuillez autoriser les pop-ups pour ce site');
-          return;
-        }
-        
-        // Vérifier périodiquement le statut du paiement
-        paymentCheckInterval.current = setInterval(async () => {
-          try {
-            const statusResponse = await API.post("/payment/verify", {
-              transactionId: data.transaction_id
-            });
-            
-            if (statusResponse.data.success) {
-              clearInterval(paymentCheckInterval.current);
-              if (isMounted.current) {
-                navigate("/payment/success");
-              }
-            } else if (statusResponse.data.status === "REJECTED") {
-              clearInterval(paymentCheckInterval.current);
-              if (isMounted.current) {
-                setError("Paiement échoué. Veuillez réessayer.");
-              }
-            }
-          } catch (err) {
-            console.error("Erreur vérification paiement:", err);
-          }
-        }, 5000); // Vérifier toutes les 5 secondes
-        
+      if (result.success && result.payment_url) {
+        // Rediriger vers PayDunya
+        window.location.href = result.payment_url;
       } else {
-        setError(data.error || "Impossible de générer le lien de paiement");
+        setError(result.error || "Impossible de générer le lien de paiement");
       }
     } catch (err) {
       console.error("Erreur paiement:", err);
-      if (isMounted.current) {
-        setError(err.response?.data?.error || err.message || "Erreur lors de l'initialisation du paiement");
-      }
+      setError(err.message || "Erreur lors de l'initialisation du paiement");
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -155,7 +101,6 @@ const PaymentPage = () => {
             id="phone"
             value={phone}
             onChange={(e) => {
-              // Validation en temps réel
               const value = e.target.value.replace(/\D/g, '');
               if (value.length <= 11) {
                 setPhone(value);
@@ -195,12 +140,12 @@ const PaymentPage = () => {
               Redirection en cours...
             </>
           ) : (
-            "Payer avec CinetPay"
+            "Payer avec PayDunya"
           )}
         </button>
 
         <p className="text-xs text-gray-500 text-center mt-4">
-          Vous serez redirigé vers la plateforme de paiement sécurisé CinetPay
+          Vous serez redirigé vers la plateforme de paiement sécurisé PayDunya
         </p>
       </div>
     </div>

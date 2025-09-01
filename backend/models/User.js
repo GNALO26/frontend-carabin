@@ -30,7 +30,19 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
-  lastLogin: Date
+  currentSessionId: {
+    type: String,
+    default: null
+  },
+  lastLogin: Date,
+  loginCount: {
+    type: Number,
+    default: 0
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
 }, {
   timestamps: true
 });
@@ -61,6 +73,21 @@ userSchema.methods.hasActiveSubscription = function() {
   return this.isSubscribed && 
          this.subscriptionEnd && 
          new Date() < this.subscriptionEnd;
+};
+
+// Méthode pour invalider la session
+userSchema.methods.invalidateSession = function() {
+  this.currentSessionId = null;
+  return this.save();
+};
+
+// Méthode pour créer une nouvelle session
+userSchema.methods.createNewSession = function() {
+  const { v4: uuidv4 } = require('uuid');
+  this.currentSessionId = uuidv4();
+  this.lastLogin = new Date();
+  this.loginCount += 1;
+  return this.save();
 };
 
 module.exports = mongoose.model('User', userSchema);
