@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +10,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,15 +24,17 @@ const LoginPage = () => {
       setLoading(true);
       setError("");
 
-      const { data } = await API.post("/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
+      // Utiliser la fonction login du contexte d'authentification
+      const result = await login(formData);
 
-      localStorage.setItem("token", data.token);
-      navigate("/dashboard");
+      if (result.success) {
+        navigate("/dashboard");
+      } else {
+        setError(result.error);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || "Erreur de connexion. Vérifiez vos identifiants.");
+      console.error("❌ Erreur de connexion :", err);
+      setError(err.message || "Erreur de connexion. Vérifiez vos identifiants.");
     } finally {
       setLoading(false);
     }
@@ -46,7 +49,7 @@ const LoginPage = () => {
           </h2>
 
           {error && (
-            <div className="error-message">
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6">
               <p>{error}</p>
             </div>
           )}
@@ -60,7 +63,7 @@ const LoginPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="input-field"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
                 placeholder="exemple@email.com"
               />
             </div>
@@ -73,7 +76,7 @@ const LoginPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="input-field"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
                 placeholder=""
               />
             </div>
@@ -81,7 +84,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 disabled:opacity-50"
             >
               {loading ? (
                 <div className="flex items-center justify-center">

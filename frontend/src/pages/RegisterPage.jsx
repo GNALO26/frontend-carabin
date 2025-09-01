@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
-    name: "", // AJOUT DU CHAMP NAME
+    name: "",
     email: "",
     password: "",
     passwordConfirm: "",
@@ -13,7 +12,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,27 +36,21 @@ const RegisterPage = () => {
       setLoading(true);
       setError("");
 
-      // Supprimer temporairement les tokens pour éviter les interférences
-      localStorage.removeItem("token");
-      localStorage.removeItem("adminToken");
-
-      // Appel au backend - AJOUT DU CHAMP NAME
-      const { data } = await API.post("/auth/register", {
-        name: formData.name, // AJOUTÉ
+      // Utiliser la fonction register du contexte d'authentification
+      const result = await register({
+        name: formData.name,
         email: formData.email,
-        password: formData.password,
+        password: formData.password
       });
 
-      console.log("✅ Inscription réussie :", data);
-
-      // Sauvegarder le token et connecter l'utilisateur
-      localStorage.setItem("token", data.token);
-      login(data.token, data.user);
-      navigate("/dashboard");
+      if (result.success) {
+        navigate("/dashboard");
+      } else {
+        setError(result.error);
+      }
     } catch (err) {
-      console.error("❌ Erreur d'inscription :", err.response?.data || err.message);
-      const errorMessage = err.response?.data?.error || "Erreur lors de l'inscription. Veuillez réessayer.";
-      setError(errorMessage);
+      console.error("❌ Erreur d'inscription :", err);
+      setError(err.message || "Erreur lors de l'inscription. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +71,6 @@ const RegisterPage = () => {
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* AJOUT DU CHAMP NAME */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
             <input
