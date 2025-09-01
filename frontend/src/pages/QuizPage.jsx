@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import retryService from "../services/retryService";
 
 const QuizPage = () => {
   const { id } = useParams();
@@ -19,10 +18,10 @@ const QuizPage = () => {
   const [showExplanations, setShowExplanations] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [timeTaken, setTimeTaken] = useState(0);
-  const isMountedRef = useRef(true);
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    isMountedRef.current = true;
+    isMounted.current = true;
     setStartTime(new Date());
     
     const fetchQuiz = async () => {
@@ -31,8 +30,10 @@ const QuizPage = () => {
         const quizData = response.data;
         
         if (!quizData.free && !hasPremiumAccess()) {
-          setRequiresSubscription(true);
-          setLoading(false);
+          if (isMounted.current) {
+            setRequiresSubscription(true);
+            setLoading(false);
+          }
           return;
         }
         
@@ -47,18 +48,20 @@ const QuizPage = () => {
           }
         });
         
-        if (isMountedRef.current) {
+        if (isMounted.current) {
           setQuiz({ ...quizData, questions: uniqueQuestions });
         }
       } catch (err) {
         if (err.response?.status === 403) {
-          setRequiresSubscription(true);
-        } else {
+          if (isMounted.current) {
+            setRequiresSubscription(true);
+          }
+        } else if (isMounted.current) {
           setError("Erreur lors du chargement du quiz");
         }
         console.error(err);
       } finally {
-        if (isMountedRef.current) {
+        if (isMounted.current) {
           setLoading(false);
         }
       }
@@ -67,7 +70,7 @@ const QuizPage = () => {
     fetchQuiz();
 
     return () => {
-      isMountedRef.current = false;
+      isMounted.current = false;
     };
   }, [id, hasPremiumAccess]);
 
@@ -76,7 +79,9 @@ const QuizPage = () => {
     let timer;
     if (startTime && !quizFinished) {
       timer = setInterval(() => {
-        setTimeTaken(Math.floor((new Date() - startTime) / 1000));
+        if (isMounted.current) {
+          setTimeTaken(Math.floor((new Date() - startTime) / 1000));
+        }
       }, 1000);
     }
     return () => clearInterval(timer);
@@ -140,9 +145,7 @@ const QuizPage = () => {
   };
 
   const saveQuizResult = async (finalScore, answersWithDetails) => {
-    const requestKey = `quiz-result-${id}-${Date.now()}`;
-    
-    const saveRequest = async () => {
+    try {
       await API.post('/results', {
         quizId: id,
         score: finalScore,
@@ -150,28 +153,8 @@ const QuizPage = () => {
         answers: answersWithDetails,
         timeTaken: timeTaken
       });
-    };
-
-    try {
-      // Essayer d'abord de sauvegarder normalement
-      await saveRequest();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde du résultat:", error);
-      
-      // Si échec, ajouter au service de réessai
-      retryService.addRequest(saveRequest, requestKey, 3);
-      
-      // Stocker localement pour réessai ultérieur
-      const pendingResults = JSON.parse(localStorage.getItem('pendingQuizResults') || '[]');
-      pendingResults.push({
-        quizId: id,
-        score: finalScore,
-        totalQuestions: quiz.questions.length,
-        answers: answersWithDetails,
-        timeTaken: timeTaken,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('pendingQuizResults', JSON.stringify(pendingResults));
     }
   };
 

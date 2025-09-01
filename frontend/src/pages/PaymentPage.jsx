@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../services/api";
-import retryService from "../services/retryService";
 
 const PaymentPage = () => {
   const [amount] = useState(5000);
@@ -12,14 +11,18 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const paymentCheckInterval = useRef(null);
+  const isMounted = useRef(true);
 
   useEffect(() => {
+    isMounted.current = true;
+    
     if (!user) {
       navigate("/login");
     }
 
     // Nettoyer l'intervalle lors du démontage du composant
     return () => {
+      isMounted.current = false;
       if (paymentCheckInterval.current) {
         clearInterval(paymentCheckInterval.current);
       }
@@ -89,10 +92,14 @@ const PaymentPage = () => {
             
             if (statusResponse.data.success) {
               clearInterval(paymentCheckInterval.current);
-              navigate("/payment/success");
+              if (isMounted.current) {
+                navigate("/payment/success");
+              }
             } else if (statusResponse.data.status === "REJECTED") {
               clearInterval(paymentCheckInterval.current);
-              setError("Paiement échoué. Veuillez réessayer.");
+              if (isMounted.current) {
+                setError("Paiement échoué. Veuillez réessayer.");
+              }
             }
           } catch (err) {
             console.error("Erreur vérification paiement:", err);
@@ -104,19 +111,13 @@ const PaymentPage = () => {
       }
     } catch (err) {
       console.error("Erreur paiement:", err);
-      setError(err.message || "Erreur lors de l'initialisation du paiement");
-      
-      // Stocker la tentative de paiement échouée pour réessai
-      const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
-      pendingPayments.push({
-        amount: 5000,
-        description: "Abonnement Quiz de Carabin Premium",
-        phone: phone,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+      if (isMounted.current) {
+        setError(err.response?.data?.error || err.message || "Erreur lors de l'initialisation du paiement");
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
