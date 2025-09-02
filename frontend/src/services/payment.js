@@ -47,7 +47,7 @@ export const paymentService = {
         throw new Error('Format de numéro invalide. Utilisez: 22961234567 ou 061234567');
       }
 
-      const response = await API.post('/payment/initiate', {
+      const response = await API.post('/payment/initiate-payment', {
         amount: paymentData.amount,
         description: paymentData.description,
         phone: formattedPhone

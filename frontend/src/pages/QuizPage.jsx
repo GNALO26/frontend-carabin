@@ -22,9 +22,10 @@ const QuizPage = () => {
   const [showExplanations, setShowExplanations] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [timeTaken, setTimeTaken] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({});
 
   useEffect(() => {
-    let isMountedRef = true;
+    let isActive = true;
     const controller = new AbortController();
 
     const fetchQuiz = async () => {
@@ -33,15 +34,22 @@ const QuizPage = () => {
           const response = await API.get(`/quizzes/${id}`, {
             signal: controller.signal
           });
-          if (isMountedRef) {
+          if (isActive && isMounted.current) {
             setQuiz(response.data);
             setStartTime(new Date());
+            
+            // Initialiser userAnswers avec des tableaux vids pour chaque question
+            const initialAnswers = {};
+            response.data.questions.forEach((_, index) => {
+              initialAnswers[index] = [];
+            });
+            setUserAnswers(initialAnswers);
           }
           return response;
         },
         {
           onError: (err) => {
-            if (isMountedRef) {
+            if (isActive && isMounted.current) {
               if (err.response?.status === 403) {
                 setRequiresSubscription(true);
               } else {
@@ -58,18 +66,20 @@ const QuizPage = () => {
     }
 
     return () => {
-      isMountedRef = false;
+      isActive = false;
       controller.abort();
       safeClearTimeout();
     };
-  }, [id, callApi, safeClearTimeout]);
+  }, [id, isMounted, callApi, safeClearTimeout]);
 
   // Chronomètre
   useEffect(() => {
     let timer;
     if (startTime && !quizFinished) {
       timer = safeSetTimeout(() => {
-        setTimeTaken(Math.floor((new Date() - startTime) / 1000));
+        if (isMounted.current) {
+          setTimeTaken(Math.floor((new Date() - startTime) / 1000));
+        }
       }, 1000);
     }
     return () => {
@@ -77,32 +87,29 @@ const QuizPage = () => {
         safeClearTimeout(timer);
       }
     };
-  }, [startTime, quizFinished, safeSetTimeout, safeClearTimeout]);
+  }, [startTime, quizFinished, isMounted, safeSetTimeout, safeClearTimeout]);
 
   const handleAnswerSelect = (answerIndex) => {
     if (!quiz || quizFinished) return;
 
-    const newSelectedAnswers = [...selectedAnswers];
-    const currentSelections = newSelectedAnswers[currentQuestionIndex] || [];
-
-    const currentQuestion = quiz.questions[currentQuestionIndex];
-    const isMultipleChoice = currentQuestion.type === "multiple";
+    const currentSelections = [...userAnswers[currentQuestionIndex]];
     
-    if (isMultipleChoice) {
-      // Pour les questions à choix multiple, on toggle la réponse
-      if (currentSelections.includes(answerIndex)) {
-        newSelectedAnswers[currentQuestionIndex] = currentSelections.filter(
+    // Pour toutes les questions, permettre la sélection multiple
+    if (currentSelections.includes(answerIndex)) {
+      // Désélectionner si déjà sélectionné
+      setUserAnswers({
+        ...userAnswers,
+        [currentQuestionIndex]: currentSelections.filter(
           (ans) => ans !== answerIndex
-        );
-      } else {
-        newSelectedAnswers[currentQuestionIndex] = [...currentSelections, answerIndex];
-      }
+        )
+      });
     } else {
-      // Pour les questions à choix unique, on remplace la sélection
-      newSelectedAnswers[currentQuestionIndex] = [answerIndex];
+      // Ajouter à la sélection
+      setUserAnswers({
+        ...userAnswers,
+        [currentQuestionIndex]: [...currentSelections, answerIndex]
+      });
     }
-
-    setSelectedAnswers(newSelectedAnswers);
   };
 
   const handleNextQuestion = () => {
@@ -125,20 +132,17 @@ const QuizPage = () => {
     const answersWithDetails = [];
 
     quiz.questions.forEach((question, index) => {
-      const userAnswers = selectedAnswers[index] || [];
+      const userSelections = userAnswers[index] || [];
       const correctAnswers = question.correctAnswers || [];
 
-      let isCorrect = false;
+      // Vérifier si les réponses sont correctes
+      // Pour toutes les questions, on utilise la même logique de choix multiple
+      const correctSelections = correctAnswers.filter(ans => userSelections.includes(ans));
+      const incorrectSelections = userSelections.filter(ans => !correctAnswers.includes(ans));
       
-      if (question.type === "multiple") {
-        // Pour les questions à choix multiple, on vérifie que toutes les réponses correctes sont sélectionnées et qu'il n'y a pas de réponses incorrectes
-        const correctSelections = correctAnswers.filter(ans => userAnswers.includes(ans));
-        const incorrectSelections = userAnswers.filter(ans => !correctAnswers.includes(ans));
-        isCorrect = correctSelections.length === correctAnswers.length && incorrectSelections.length === 0;
-      } else {
-        // Pour les questions à choix unique, on vérifie que la réponse est correcte
-        isCorrect = userAnswers.length === 1 && correctAnswers.includes(userAnswers[0]);
-      }
+      // Une réponse est correcte si toutes les bonnes réponses sont sélectionnées
+      // et qu'aucune mauvaise réponse n'est sélectionnée
+      const isCorrect = correctSelections.length === correctAnswers.length && incorrectSelections.length === 0;
 
       if (isCorrect) {
         calculatedScore++;
@@ -146,7 +150,7 @@ const QuizPage = () => {
 
       answersWithDetails.push({
         questionId: question._id,
-        selectedOptions: userAnswers,
+        selectedOptions: userSelections,
         isCorrect,
         timeTaken: 0
       });
@@ -268,6 +272,12 @@ const QuizPage = () => {
                   <div key={index} className="mb-6 p-4 bg-gray-50 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">{question.text}</h3>
                     <p className="text-gray-700 mb-2">
+                      <strong>Vos réponses:</strong>{" "}
+                      {userAnswers[index] && userAnswers[index].length > 0 
+                        ? userAnswers[index].map(idx => question.options[idx]).join(", ")
+                        : "Aucune réponse sélectionnée"}
+                    </p>
+                    <p className="text-gray-700 mb-2">
                       <strong>Réponse(s) correcte(s):</strong>{" "}
                       {question.correctAnswers.map(idx => question.options[idx]).join(", ")}
                     </p>
@@ -287,8 +297,7 @@ const QuizPage = () => {
   }
 
   const currentQuestion = quiz.questions[currentQuestionIndex];
-  const currentSelections = selectedAnswers[currentQuestionIndex] || [];
-  const isMultipleChoice = currentQuestion.type === "multiple";
+  const currentSelections = userAnswers[currentQuestionIndex] || [];
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -306,9 +315,11 @@ const QuizPage = () => {
             </div>
 
             <h2 className="text-xl font-semibold mb-4">{currentQuestion.text}</h2>
-            {isMultipleChoice && (
-              <p className="text-sm text-gray-500 mb-4">(Sélection multiple autorisée)</p>
-            )}
+            
+            {/* Indication que la sélection multiple est autorisée */}
+            <p className="text-sm text-gray-500 mb-4">
+              (Sélection multiple autorisée - choisissez toutes les réponses correctes)
+            </p>
 
             <div className="space-y-3">
               {currentQuestion.options.map((option, index) => (
@@ -322,23 +333,14 @@ const QuizPage = () => {
                   }`}
                 >
                   <div className="flex items-center">
-                    {isMultipleChoice ? (
-                      <div className={`w-5 h-5 border rounded mr-3 flex items-center justify-center ${
-                        currentSelections.includes(index) 
-                          ? "bg-blue-500 border-blue-500 text-white" 
-                          : "border-gray-400"
-                      }`}>
-                        {currentSelections.includes(index) && "✓"}
-                      </div>
-                    ) : (
-                      <div className={`w-5 h-5 border rounded-full mr-3 flex items-center justify-center ${
-                        currentSelections.includes(index) 
-                          ? "bg-blue-500 border-blue-500 text-white" 
-                          : "border-gray-400"
-                      }`}>
-                        {currentSelections.includes(index) && "•"}
-                      </div>
-                    )}
+                    {/* Toujours utiliser des checkbox pour la sélection multiple */}
+                    <div className={`w-5 h-5 border rounded mr-3 flex items-center justify-center ${
+                      currentSelections.includes(index) 
+                        ? "bg-blue-500 border-blue-500 text-white" 
+                        : "border-gray-400"
+                    }`}>
+                      {currentSelections.includes(index) && "✓"}
+                    </div>
                     <span>{option}</span>
                   </div>
                 </button>

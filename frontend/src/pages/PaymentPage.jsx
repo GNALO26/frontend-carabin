@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import paymentService, { formatPhoneNumber, validatePhoneNumber } from "../services/payment";
@@ -13,6 +13,7 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMounted = useIsMounted();
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     // Valider le numéro de téléphone à chaque changement
@@ -31,8 +32,21 @@ const PaymentPage = () => {
     }
   }, [phone]);
 
+  useEffect(() => {
+    return () => {
+      // Annuler la requête en cours si le composant est démonté
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const handlePayment = async () => {
     if (!isMounted.current) return;
+    
+    // Créer un nouveau AbortController pour cette requête
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
     try {
       setLoading(true);
@@ -65,6 +79,10 @@ const PaymentPage = () => {
         setError(result.error || "Impossible de générer le lien de paiement");
       }
     } catch (err) {
+      if (err.name === 'CanceledError') {
+        console.log('Requête annulée');
+        return;
+      }
       console.error("Erreur paiement:", err);
       setError(err.message || "Erreur lors de l'initialisation du paiement");
     } finally {

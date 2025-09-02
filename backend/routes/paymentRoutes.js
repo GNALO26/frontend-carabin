@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const authMiddleware = require('../middlewares/authMiddleware');
+// Ajoutez cette route
+router.post('/initiate-payment', authMiddleware, paymentController.initiatePayment);
 
 // Initier un paiement avec PayDunya
 router.post('/initiate', authMiddleware, paymentController.initiatePayment);

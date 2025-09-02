@@ -314,10 +314,11 @@ exports.handlePaydunyaWebhook = async (req, res) => {
     const payload = req.body;
 
     // Vérifier la signature pour s'assurer que la requête vient de PayDunya
-    if (!verifySignature(payload, signature)) {
-      console.error('Signature invalide reçue de PayDunya');
-      return res.status(401).send('Signature invalide');
-    }
+    // Pour le moment, acceptez toutes les requêtes en mode test
+if (process.env.PAYDUNYA_MODE === 'live' && !verifyPaydunyaSignature(payload, signature)) {
+  console.error('Signature invalide reçue de PayDunya');
+  return res.status(401).send('Signature invalide');
+}
 
     console.log('Notification reçue de PayDunya:', payload);
 

@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react';
 import useIsMounted from './useIsMounted';
 
-/**
- * Hook personnalisé pour gérer les appels API de manière sécurisée
- * Gère automatiquement le chargement, les erreurs et annule les requêtes si nécessaire
- */
 const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +31,11 @@ const useApi = () => {
       return response;
     } catch (err) {
       if (isMounted.current) {
+        // Ignorer les erreurs d'annulation
+        if (err.code === 'ERR_CANCELED' || err.message === 'canceled') {
+          return;
+        }
+        
         setError(err);
         if (onError) {
           onError(err);

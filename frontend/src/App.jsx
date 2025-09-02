@@ -43,16 +43,15 @@ function App() {
 
   useEffect(() => {
     let isActive = true;
-    const controller = new AbortController();
 
     const checkBackendHealth = async () => {
       try {
-        await API.get('/health', { signal: controller.signal });
+        await API.get('/health');
         if (isActive && isMounted.current) {
           setBackendStatus('healthy');
         }
       } catch (error) {
-        if (error.name === 'AbortError') return;
+        if (error.code === 'ERR_CANCELED') return; // Ignorer les erreurs d'annulation
         console.error('Le backend est indisponible:', error);
         if (isActive && isMounted.current) {
           setBackendStatus('error');
@@ -64,7 +63,6 @@ function App() {
     const handleOnline = () => {
       if (isActive && isMounted.current) {
         setIsOnline(true);
-        // Re-vérifier la santé du backend quand la connexion revient
         checkBackendHealth();
       }
     };
@@ -72,30 +70,27 @@ function App() {
     const handleOffline = () => {
       if (isActive && isMounted.current) {
         setIsOnline(false);
+        setBackendStatus('error');
       }
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Vérifier la santé du backend au chargement initial
     checkBackendHealth();
     
-    // Vérifier périodiquement la santé du backend
     const healthCheckInterval = safeSetTimeout(() => {
       checkBackendHealth();
     }, 60000);
 
     return () => {
       isActive = false;
-      controller.abort();
       safeClearTimeout(healthCheckInterval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, [isMounted, safeSetTimeout, safeClearTimeout]);
 
-  // Si le backend est en erreur ou pas de connexion internet
   if (backendStatus === 'error' || !isOnline) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -119,7 +114,6 @@ function App() {
     );
   }
 
-  // Pendant le chargement initial
   if (backendStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -137,7 +131,6 @@ function App() {
         <Router>
           <RetryFailedRequests />
           <Routes>
-            {/* --------- Layout Public --------- */}
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/quizzes" element={<QuizListPage />} />
@@ -145,7 +138,6 @@ function App() {
               <Route path="/generated/:fileName" element={<GeneratedQuizPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              {/* Routes utilisateur authentifié */}
               <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/payment" element={<PaymentPage />} />
@@ -153,7 +145,6 @@ function App() {
               </Route>
             </Route>
 
-            {/* --------- Layout Admin --------- */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route element={<AdminRoute />}>
               <Route element={<AdminLayout />}>
@@ -165,7 +156,6 @@ function App() {
               </Route>
             </Route>
 
-            {/* --------- 404 --------- */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Router>
