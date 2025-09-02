@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { formatPhoneNumber, validatePhoneNumber } from "../services/payment";
+import paymentService, { formatPhoneNumber, validatePhoneNumber } from "../services/payment";
 import { useIsMounted } from "../hooks";
 
 const PaymentPage = () => {
