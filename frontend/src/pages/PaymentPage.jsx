@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import paymentService from "../services/payment";
+import { formatPhoneNumber, validatePhoneNumber } from "../services/payment";
 import { useIsMounted } from "../hooks";
 
 const PaymentPage = () => {
@@ -17,7 +17,7 @@ const PaymentPage = () => {
   useEffect(() => {
     // Valider le numéro de téléphone à chaque changement
     if (phone) {
-      const validation = paymentService.validatePhoneNumber(phone);
+      const validation = validatePhoneNumber(phone);
       setIsValidPhone(validation.valid);
       
       if (!validation.valid && phone.length > 3) {
@@ -43,13 +43,13 @@ const PaymentPage = () => {
         return;
       }
 
-      const validation = paymentService.validatePhoneNumber(phone);
+      const validation = validatePhoneNumber(phone);
       if (!validation.valid) {
         setError(validation.message);
         return;
       }
 
-      const formattedPhone = paymentService.formatPhoneNumber(phone);
+      const formattedPhone = formatPhoneNumber(phone);
 
       // Appel API pour initier le paiement avec PayDunya
       const result = await paymentService.initiatePayment({

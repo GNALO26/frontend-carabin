@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
           console.error('Token validation failed:', error);
           if (isMounted.current) {
             setAuthError('Session expirée. Veuillez vous reconnecter.');
-            logout();
+            // Ne pas déconnecter automatiquement, laisser l'utilisateur décider
           }
         }
       }
@@ -125,16 +125,18 @@ export const AuthProvider = ({ children }) => {
   }, [isMounted]);
 
   const logout = useCallback(() => {
+    // Nettoyer le local storage d'abord
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    if (isMounted.current) {
+      setUser(null);
+      setAuthError(null);
+    }
+    
+    // Envoyer la requête de déconnexion après avoir nettoyé l'état local
     API.post('/auth/logout')
-      .catch(error => console.error('Logout error:', error))
-      .finally(() => {
-        if (isMounted.current) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setUser(null);
-          setAuthError(null);
-        }
-      });
+      .catch(error => console.error('Logout error:', error));
   }, [isMounted]);
 
   const validateAccessCode = useCallback(async (code) => {

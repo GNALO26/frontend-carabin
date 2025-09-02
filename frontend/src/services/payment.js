@@ -1,5 +1,6 @@
 import API from './api';
 
+// Fonctions utilitaires pour la validation des numéros
 export const formatPhoneNumber = (phone) => {
   const cleaned = phone.replace(/\D/g, '');
   
@@ -18,6 +19,26 @@ export const formatPhoneNumber = (phone) => {
   return null;
 };
 
+export const validatePhoneNumber = (phone) => {
+  const cleaned = phone.replace(/\D/g, '');
+  
+  const regex = /^(229\d{8}|0\d{8})$/;
+  
+  if (!regex.test(cleaned)) {
+    return {
+      valid: false,
+      message: 'Format de numéro invalide. Ex: 229 97 00 00 00 ou 097 00 00 00'
+    };
+  }
+  
+  return {
+    valid: true,
+    message: 'Numéro valide',
+    formatted: cleaned.startsWith('229') ? cleaned : '229' + cleaned.substring(1)
+  };
+};
+
+// Service de paiement principal
 export const paymentService = {
   initiatePayment: async (paymentData) => {
     try {
@@ -119,24 +140,9 @@ export const paymentService = {
     }
   },
 
-  validatePhoneNumber: (phone) => {
-    const cleaned = phone.replace(/\D/g, '');
-    
-    const regex = /^(229\d{8}|0\d{8})$/;
-    
-    if (!regex.test(cleaned)) {
-      return {
-        valid: false,
-        message: 'Format de numéro invalide. Ex: 229 97 00 00 00 ou 097 00 00 00'
-      };
-    }
-    
-    return {
-      valid: true,
-      message: 'Numéro valide',
-      formatted: cleaned.startsWith('229') ? cleaned : '229' + cleaned.substring(1)
-    };
-  }
+  // Exposer les fonctions utilitaires
+  formatPhoneNumber,
+  validatePhoneNumber
 };
 
 export default paymentService;

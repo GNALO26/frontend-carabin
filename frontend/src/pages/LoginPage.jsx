@@ -17,11 +17,11 @@ const LoginPage = () => {
 
   // Rediriger si l'utilisateur est déjà connecté
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       const from = location.state?.from?.pathname || "/dashboard";
       navigate(from, { replace: true });
     }
-  }, [user, navigate, location]);
+  }, [user, loading, navigate, location]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,7 +41,7 @@ const LoginPage = () => {
       const result = await login(formData);
 
       if (result.success) {
-        // Redirection gérée par l'effet useEffect ci-dessus
+        // La redirection sera gérée par le useEffect ci-dessus
       } else {
         setError(result.error);
       }
@@ -117,12 +117,6 @@ const LoginPage = () => {
             <Link 
               to="/register" 
               className="text-blue-600 font-semibold hover:underline"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/register", { 
-                  state: { from: location.state?.from || { pathname: "/" } } 
-                });
-              }}
             >
               Créez-en un
             </Link>
