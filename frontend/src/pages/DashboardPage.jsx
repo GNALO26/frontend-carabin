@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import API, { createCancelToken } from "../services/api";
 import { useIsMounted } from "../hooks";
+import axios from 'axios'; // Import manquant ajouté
 
 const DashboardPage = () => {
   const { user } = useAuth();
