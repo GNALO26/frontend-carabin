@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://carabin-quiz-backend.onrender.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://philosophical-carp-quiz-de-carabin-14ca72a2.koyeb.app/api';
 
 const API = axios.create({
   baseURL: API_BASE_URL,
@@ -28,6 +28,11 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Ne pas rediriger si la requête a été annulée
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+    
     if (error.response?.status === 401) {
       // Token invalide ou expiré
       localStorage.removeItem('token');
@@ -37,5 +42,10 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Fonction pour créer un token d'annulation
+export const createCancelToken = () => {
+  return axios.CancelToken.source();
+};
 
 export default API;

@@ -42,15 +42,19 @@ function App() {
   const { safeSetTimeout, safeClearTimeout } = useSafeTimeout();
 
   useEffect(() => {
+    let isActive = true;
+    const controller = new AbortController();
+
     const checkBackendHealth = async () => {
       try {
-        await API.get('/health');
-        if (isMounted.current) {
+        await API.get('/health', { signal: controller.signal });
+        if (isActive && isMounted.current) {
           setBackendStatus('healthy');
         }
       } catch (error) {
+        if (error.name === 'AbortError') return;
         console.error('Le backend est indisponible:', error);
-        if (isMounted.current) {
+        if (isActive && isMounted.current) {
           setBackendStatus('error');
         }
       }
@@ -58,7 +62,7 @@ function App() {
 
     // Vérifier la connexion internet
     const handleOnline = () => {
-      if (isMounted.current) {
+      if (isActive && isMounted.current) {
         setIsOnline(true);
         // Re-vérifier la santé du backend quand la connexion revient
         checkBackendHealth();
@@ -66,7 +70,7 @@ function App() {
     };
     
     const handleOffline = () => {
-      if (isMounted.current) {
+      if (isActive && isMounted.current) {
         setIsOnline(false);
       }
     };
@@ -83,6 +87,8 @@ function App() {
     }, 60000);
 
     return () => {
+      isActive = false;
+      controller.abort();
       safeClearTimeout(healthCheckInterval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);

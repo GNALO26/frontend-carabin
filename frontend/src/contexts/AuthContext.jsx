@@ -1,104 +1,145 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import API from '../services/api';
+import { useIsMounted } from '../hooks';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const isMounted = useIsMounted();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-        
-        // Vérifier la validité du token
-        API.get('/auth/me')
-          .then(response => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        try {
+          // Vérifier la validité du token
+          const response = await API.get('/auth/me');
+          if (isMounted.current) {
             setUser(response.data.user);
-          })
-          .catch(error => {
-            console.error('Token validation failed:', error);
+            setAuthError(null);
+          }
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          if (isMounted.current) {
+            setAuthError('Session expirée. Veuillez vous reconnecter.');
             logout();
-          });
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        logout();
+          }
+        }
       }
-    }
-    setIsLoading(false);
-  }, []);
+      
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    };
 
-  // Ajout de la fonction refreshUser
-  const refreshUser = async () => {
+    initializeAuth();
+  }, [isMounted]);
+
+  const refreshUser = useCallback(async () => {
     try {
       const response = await API.get('/auth/me');
-      setUser(response.data.user);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (isMounted.current) {
+        setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setAuthError(null);
+      }
       return response.data.user;
     } catch (error) {
       console.error('Error refreshing user:', error);
-      logout();
+      if (isMounted.current) {
+        setAuthError('Erreur lors de la mise à jour du profil');
+      }
+      throw error;
     }
-  };
+  }, [isMounted]);
 
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials) => {
     try {
+      setAuthError(null);
       const response = await API.post('/auth/login', credentials);
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
+        
+        if (isMounted.current) {
+          setUser(response.data.user);
+          setAuthError(null);
+        }
+        
         return { success: true };
       } else {
         return { success: false, error: 'No token received' };
       }
     } catch (error) {
       console.error('Login error:', error);
+      const errorMessage = error.response?.data?.error || 'Erreur de connexion';
+      
+      if (isMounted.current) {
+        setAuthError(errorMessage);
+      }
+      
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Erreur de connexion' 
+        error: errorMessage
       };
     }
-  };
+  }, [isMounted]);
 
-  const register = async (userData) => {
+  const register = useCallback(async (userData) => {
     try {
+      setAuthError(null);
       const response = await API.post('/auth/register', userData);
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
+        
+        if (isMounted.current) {
+          setUser(response.data.user);
+          setAuthError(null);
+        }
+        
         return { success: true };
       } else {
         return { success: false, error: 'No token received' };
       }
     } catch (error) {
       console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.error || 'Erreur d\'inscription';
+      
+      if (isMounted.current) {
+        setAuthError(errorMessage);
+      }
+      
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Erreur d\'inscription' 
+        error: errorMessage
       };
     }
-  };
+  }, [isMounted]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     API.post('/auth/logout')
       .catch(error => console.error('Logout error:', error))
       .finally(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
+        if (isMounted.current) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+          setAuthError(null);
+        }
       });
-  };
+  }, [isMounted]);
 
-  const validateAccessCode = async (code) => {
+  const validateAccessCode = useCallback(async (code) => {
     try {
+      setAuthError(null);
       const response = await API.post('/payment/use-access-code', { code });
       
       if (response.data.success) {
@@ -110,14 +151,20 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Access code validation error:', error);
+      const errorMessage = error.response?.data?.error || 'Erreur de validation du code';
+      
+      if (isMounted.current) {
+        setAuthError(errorMessage);
+      }
+      
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Erreur de validation du code' 
+        error: errorMessage
       };
     }
-  };
+  }, [refreshUser, isMounted]);
 
-  const hasPremiumAccess = () => {
+  const hasPremiumAccess = useCallback(() => {
     if (!user) return false;
     
     if (user.subscriptionEnd) {
@@ -129,7 +176,7 @@ export const AuthProvider = ({ children }) => {
     }
     
     return user.isSubscribed === true;
-  };
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -143,12 +190,13 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       isLoading,
+      authError,
       login,
       register,
       logout,
       validateAccessCode,
       hasPremiumAccess,
-      refreshUser // Ajout de la fonction refreshUser
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

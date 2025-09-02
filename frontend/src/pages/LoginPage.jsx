@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useIsMounted } from "../hooks";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,17 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, user } = useAuth();
+  const isMounted = useIsMounted();
+
+  // Rediriger si l'utilisateur est déjà connecté
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || "/dashboard";
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,6 +30,8 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isMounted.current) return;
 
     try {
       setLoading(true);
@@ -28,7 +41,7 @@ const LoginPage = () => {
       const result = await login(formData);
 
       if (result.success) {
-        navigate("/dashboard");
+        // Redirection gérée par l'effet useEffect ci-dessus
       } else {
         setError(result.error);
       }
@@ -36,7 +49,9 @@ const LoginPage = () => {
       console.error("❌ Erreur de connexion :", err);
       setError(err.message || "Erreur de connexion. Vérifiez vos identifiants.");
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -99,7 +114,16 @@ const LoginPage = () => {
 
           <p className="text-sm text-gray-600 text-center mt-8">
             Pas encore de compte ?{" "}
-            <Link to="/register" className="text-blue-600 font-semibold hover:underline">
+            <Link 
+              to="/register" 
+              className="text-blue-600 font-semibold hover:underline"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/register", { 
+                  state: { from: location.state?.from || { pathname: "/" } } 
+                });
+              }}
+            >
               Créez-en un
             </Link>
           </p>

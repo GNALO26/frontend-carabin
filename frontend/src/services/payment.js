@@ -1,16 +1,39 @@
 import API from './api';
 
+export const formatPhoneNumber = (phone) => {
+  const cleaned = phone.replace(/\D/g, '');
+  
+  if (cleaned.startsWith('229') && cleaned.length === 11) {
+    return cleaned;
+  }
+  
+  if (cleaned.length === 8) {
+    return '229' + cleaned;
+  }
+  
+  if (cleaned.length === 9 && cleaned.startsWith('0')) {
+    return '229' + cleaned.substring(1);
+  }
+  
+  return null;
+};
+
 export const paymentService = {
   initiatePayment: async (paymentData) => {
     try {
+      const formattedPhone = formatPhoneNumber(paymentData.phone);
+      if (!formattedPhone) {
+        throw new Error('Format de numéro invalide. Utilisez: 22961234567 ou 061234567');
+      }
+
       const response = await API.post('/payment/initiate', {
-        amount: paymentData.amount || 5000,
-        description: paymentData.description || 'Abonnement Quiz de Carabin Premium',
-        phone: paymentData.phone
+        amount: paymentData.amount,
+        description: paymentData.description,
+        phone: formattedPhone
       });
 
       return {
-        success: response.data.success,
+        success: true,
         payment_url: response.data.payment_url,
         token: response.data.token,
         error: null
@@ -94,32 +117,6 @@ export const paymentService = {
         error: error.response?.data?.error || error.message || 'Erreur lors de la vérification de l\'abonnement'
       };
     }
-  },
-
-  formatPhoneNumber: (phone) => {
-    const cleaned = phone.replace(/\D/g, '');
-    
-    if (cleaned.startsWith('229') && cleaned.length === 11) {
-      return cleaned;
-    }
-    
-    if (cleaned.length === 8) {
-      return '229' + cleaned;
-    }
-    
-    if (cleaned.length === 9 && cleaned.startsWith('0')) {
-      return '229' + cleaned.substring(1);
-    }
-    
-    if (cleaned.length === 10 && cleaned.startsWith('229')) {
-      return cleaned;
-    }
-    
-    if (cleaned.length === 12 && cleaned.startsWith('229')) {
-      return cleaned.substring(0, 11);
-    }
-    
-    return cleaned;
   },
 
   validatePhoneNumber: (phone) => {

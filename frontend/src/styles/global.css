@@ -1,0 +1,15 @@
+/* Empêcher le zoom sur les inputs sur mobile */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Empêcher les actions tactiles indésirables */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}

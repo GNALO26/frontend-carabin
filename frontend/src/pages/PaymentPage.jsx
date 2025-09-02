@@ -1,35 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import paymentService from "../services/payment";
+import { useIsMounted } from "../hooks";
 
 const PaymentPage = () => {
   const [amount] = useState(5000);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isValidPhone, setIsValidPhone] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMounted = useIsMounted();
 
-  const formatPhoneNumber = (phone) => {
-    const cleaned = phone.replace(/\D/g, '');
-    
-    if (cleaned.startsWith('229') && cleaned.length === 11) {
-      return cleaned;
+  useEffect(() => {
+    // Valider le numéro de téléphone à chaque changement
+    if (phone) {
+      const validation = paymentService.validatePhoneNumber(phone);
+      setIsValidPhone(validation.valid);
+      
+      if (!validation.valid && phone.length > 3) {
+        setError(validation.message);
+      } else if (validation.valid) {
+        setError("");
+      }
+    } else {
+      setIsValidPhone(false);
+      setError("");
     }
-    
-    if (cleaned.length === 8) {
-      return '229' + cleaned;
-    }
-    
-    if (cleaned.length === 9 && cleaned.startsWith('0')) {
-      return '229' + cleaned.substring(1);
-    }
-    
-    return cleaned;
-  };
+  }, [phone]);
 
   const handlePayment = async () => {
+    if (!isMounted.current) return;
+    
     try {
       setLoading(true);
       setError("");
@@ -39,16 +43,17 @@ const PaymentPage = () => {
         return;
       }
 
-      const formattedPhone = formatPhoneNumber(phone);
-
-      if (!formattedPhone.match(/^229[0-9]{8}$/)) {
-        setError("Format de numéro invalide. Le numéro doit avoir 11 chiffres: 229 + 8 chiffres (ex: 22961234567)");
+      const validation = paymentService.validatePhoneNumber(phone);
+      if (!validation.valid) {
+        setError(validation.message);
         return;
       }
 
+      const formattedPhone = paymentService.formatPhoneNumber(phone);
+
       // Appel API pour initier le paiement avec PayDunya
       const result = await paymentService.initiatePayment({
-        amount: 5000,
+        amount: amount,
         description: "Abonnement Quiz de Carabin Premium",
         phone: formattedPhone
       });
@@ -63,12 +68,18 @@ const PaymentPage = () => {
       console.error("Erreur paiement:", err);
       setError(err.message || "Erreur lors de l'initialisation du paiement");
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
   if (!user) {
-    return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
@@ -78,7 +89,7 @@ const PaymentPage = () => {
         
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
-            <p>{error}</p>
+            <p className="font-medium">{error}</p>
           </div>
         )}
 
@@ -89,6 +100,7 @@ const PaymentPage = () => {
             <li>Statistiques détaillées de progression</li>
             <li>Certificats de réussite</li>
             <li>Défis exclusifs</li>
+            <li>Sans publicité</li>
           </ul>
         </div>
         
@@ -113,7 +125,7 @@ const PaymentPage = () => {
           <p className="text-xs text-gray-500 mt-1">
             Formats acceptés: 22961234567 (11 chiffres) ou 061234567 (9 chiffres)
           </p>
-          {phone && !phone.match(/^(229[0-9]{8}|0[0-9]{8})$/) && (
+          {phone && !isValidPhone && (
             <p className="text-xs text-red-500 mt-1">
               Format invalide. Utilisez: 22961234567 ou 061234567
             </p>
@@ -128,8 +140,8 @@ const PaymentPage = () => {
 
         <button
           onClick={handlePayment}
-          disabled={loading || !phone}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || !isValidPhone}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
             <>
@@ -143,6 +155,14 @@ const PaymentPage = () => {
             "Payer avec PayDunya"
           )}
         </button>
+
+        <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
+          <h3 className="font-semibold text-yellow-800 mb-2">Information importante</h3>
+          <p className="text-sm text-yellow-700">
+            Après le paiement, vous serez automatiquement redirigé vers notre site. 
+            Si ce n'est pas le cas, merci de rafraîchir la page pour activer votre abonnement.
+          </p>
+        </div>
 
         <p className="text-xs text-gray-500 text-center mt-4">
           Vous serez redirigé vers la plateforme de paiement sécurisé PayDunya

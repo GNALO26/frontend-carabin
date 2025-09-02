@@ -1,56 +1,96 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import API from "../services/api";
+import API, { createCancelToken } from "../services/api";
+import { useIsMounted } from "../hooks";
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [stats, setStats] = useState({
     totalQuizzes: 0,
     averageScore: 0,
     bestScore: 0
   });
+  
+  const isMounted = useIsMounted();
 
   useEffect(() => {
+    let cancelTokenSource = null;
+
     const fetchUserActivities = async () => {
+      cancelTokenSource = createCancelToken();
+      
       try {
         const [resultsResponse, activitiesResponse] = await Promise.all([
-          API.get("/results/user"),
-          API.get("/activities/user")
+          API.get("/results/user", { cancelToken: cancelTokenSource.token }),
+          API.get("/activities/user", { cancelToken: cancelTokenSource.token })
         ]);
 
         // Traiter les résultats des quizs
         const quizResults = resultsResponse.data;
-        setActivities(activitiesResponse.data);
+        
+        if (isMounted.current) {
+          setActivities(activitiesResponse.data);
 
-        // Calculer les statistiques
-        if (quizResults.length > 0) {
-          const totalQuizzes = quizResults.length;
-          const totalScore = quizResults.reduce((sum, result) => sum + result.score, 0);
-          const averageScore = Math.round((totalScore / totalQuizzes) * 100) / 100;
-          const bestScore = Math.max(...quizResults.map(result => result.score));
+          // Calculer les statistiques
+          if (quizResults.length > 0) {
+            const totalQuizzes = quizResults.length;
+            const totalScore = quizResults.reduce((sum, result) => sum + result.score, 0);
+            const averageScore = Math.round((totalScore / totalQuizzes) * 100) / 100;
+            const bestScore = Math.max(...quizResults.map(result => result.score));
 
-          setStats({
-            totalQuizzes,
-            averageScore,
-            bestScore
-          });
+            setStats({
+              totalQuizzes,
+              averageScore,
+              bestScore
+            });
+          }
         }
       } catch (error) {
-        console.error("Erreur lors du chargement des activités:", error);
+        if (isMounted.current && !axios.isCancel(error)) {
+          console.error("Erreur lors du chargement des activités:", error);
+          setError("Erreur lors du chargement des données. Veuillez réessayer.");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchUserActivities();
-  }, []);
+
+    return () => {
+      if (cancelTokenSource) {
+        cancelTokenSource.cancel("Composant démonté, requête annulée");
+      }
+    };
+  }, [isMounted]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl text-center">
+          <div className="text-red-500 text-6xl mb-4">❌</div>
+          <h1 className="text-2xl font-bold text-red-800 mb-4">Erreur</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Réessayer
+          </button>
+        </div>
       </div>
     );
   }

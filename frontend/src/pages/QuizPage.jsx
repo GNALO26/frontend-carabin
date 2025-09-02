@@ -24,11 +24,16 @@ const QuizPage = () => {
   const [timeTaken, setTimeTaken] = useState(0);
 
   useEffect(() => {
+    let isMountedRef = true;
+    const controller = new AbortController();
+
     const fetchQuiz = async () => {
       await callApi(
         async () => {
-          const response = await API.get(`/quizzes/${id}`);
-          if (isMounted.current) {
+          const response = await API.get(`/quizzes/${id}`, {
+            signal: controller.signal
+          });
+          if (isMountedRef) {
             setQuiz(response.data);
             setStartTime(new Date());
           }
@@ -36,10 +41,12 @@ const QuizPage = () => {
         },
         {
           onError: (err) => {
-            if (err.response?.status === 403) {
-              setRequiresSubscription(true);
-            } else {
-              setError(err.response?.data?.error || "Erreur lors du chargement du quiz");
+            if (isMountedRef) {
+              if (err.response?.status === 403) {
+                setRequiresSubscription(true);
+              } else {
+                setError(err.response?.data?.error || "Erreur lors du chargement du quiz");
+              }
             }
           }
         }
@@ -51,19 +58,18 @@ const QuizPage = () => {
     }
 
     return () => {
-      // Nettoyage des timeouts
+      isMountedRef = false;
+      controller.abort();
       safeClearTimeout();
     };
-  }, [id, isMounted, callApi, safeClearTimeout]);
+  }, [id, callApi, safeClearTimeout]);
 
   // Chronomètre
   useEffect(() => {
     let timer;
     if (startTime && !quizFinished) {
       timer = safeSetTimeout(() => {
-        if (isMounted.current) {
-          setTimeTaken(Math.floor((new Date() - startTime) / 1000));
-        }
+        setTimeTaken(Math.floor((new Date() - startTime) / 1000));
       }, 1000);
     }
     return () => {
@@ -71,7 +77,7 @@ const QuizPage = () => {
         safeClearTimeout(timer);
       }
     };
-  }, [startTime, quizFinished, isMounted, safeSetTimeout, safeClearTimeout]);
+  }, [startTime, quizFinished, safeSetTimeout, safeClearTimeout]);
 
   const handleAnswerSelect = (answerIndex) => {
     if (!quiz || quizFinished) return;
@@ -79,7 +85,6 @@ const QuizPage = () => {
     const newSelectedAnswers = [...selectedAnswers];
     const currentSelections = newSelectedAnswers[currentQuestionIndex] || [];
 
-    // Vérifier si la question est à choix multiple
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const isMultipleChoice = currentQuestion.type === "multiple";
     
@@ -123,14 +128,13 @@ const QuizPage = () => {
       const userAnswers = selectedAnswers[index] || [];
       const correctAnswers = question.correctAnswers || [];
 
-      // Vérifier si les réponses sont correctes
       let isCorrect = false;
       
       if (question.type === "multiple") {
-        // Pour les questions à choix multiple, on vérifie que toutes les réponses correctes sont sélectionnées
-        isCorrect = 
-          userAnswers.length === correctAnswers.length &&
-          userAnswers.every((answer) => correctAnswers.includes(answer));
+        // Pour les questions à choix multiple, on vérifie que toutes les réponses correctes sont sélectionnées et qu'il n'y a pas de réponses incorrectes
+        const correctSelections = correctAnswers.filter(ans => userAnswers.includes(ans));
+        const incorrectSelections = userAnswers.filter(ans => !correctAnswers.includes(ans));
+        isCorrect = correctSelections.length === correctAnswers.length && incorrectSelections.length === 0;
       } else {
         // Pour les questions à choix unique, on vérifie que la réponse est correcte
         isCorrect = userAnswers.length === 1 && correctAnswers.includes(userAnswers[0]);
