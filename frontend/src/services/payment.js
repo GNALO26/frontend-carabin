@@ -53,12 +53,21 @@ export const paymentService = {
         phone: formattedPhone
       });
 
-      return {
-        success: true,
-        payment_url: response.data.payment_url,
-        token: response.data.token,
-        error: null
-      };
+      if (response.data.success && response.data.payment_url) {
+        return {
+          success: true,
+          payment_url: response.data.payment_url,
+          token: response.data.token,
+          error: null
+        };
+      } else {
+        return {
+          success: false,
+          payment_url: null,
+          token: null,
+          error: response.data.error || 'Erreur lors de l\'initialisation du paiement'
+        };
+      }
     } catch (error) {
       console.error('Erreur initiation paiement:', error);
       return {
