@@ -1,48 +1,56 @@
-const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
+const Paydunya = require('paydunya');
 
-const CINETPAY_API_KEY = process.env.CINETPAY_API_KEY;
-const CINETPAY_SITE_ID = process.env.CINETPAY_SITE_ID;
-const CINETPAY_BASE_URL = 'https://api-checkout.cinetpay.com/v2';
+const setup = new Paydunya.Setup({
+  masterKey: process.env.PAYDUNYA_MASTER_KEY,
+  privateKey: process.env.PAYDUNYA_PRIVATE_KEY,
+  publicKey: process.env.PAYDUNYA_PUBLIC_KEY,
+  token: process.env.PAYDUNYA_TOKEN,
+  mode: process.env.PAYDUNYA_MODE || 'test'
+});
 
-const initiatePayment = async (paymentData) => {
+exports.initiatePayment = async (paymentData) => {
+  const invoice = new Paydunya.CheckoutInvoice(setup);
+
+  // Ajouter un article
+  invoice.addItem(
+    paymentData.description || 'Abonnement Premium',
+    1,
+    paymentData.amount,
+    paymentData.amount
+  );
+
+  invoice.totalAmount = paymentData.amount;
+  invoice.description = paymentData.description || 'Abonnement Premium';
+
+  // Ajouter des données personnalisées
+  invoice.addCustomData('user_id', paymentData.userId);
+  invoice.addCustomData('email', paymentData.email);
+  invoice.addCustomData('phone', paymentData.phone);
+
   try {
-    const transaction_id = uuidv4();
-
-    const payload = {
-      apikey: CINETPAY_API_KEY,
-      site_id: CINETPAY_SITE_ID,
-      transaction_id: transaction_id,
-      amount: paymentData.amount,
-      currency: 'XOF',
-      description: paymentData.description,
-      customer_id: paymentData.userId,
-      customer_name: paymentData.customer_name,
-      customer_email: paymentData.email,
-      customer_phone_number: paymentData.phone,
-      return_url: `${process.env.FRONTEND_URL}`/payment-success,
-      notify_url: `${process.env.BACKEND_URL}`/api/payment/notify,
-      channels: 'ALL',
-      metadata: JSON.stringify({ userId: paymentData.userId })
+    const response = await invoice.create();
+    return {
+      success: true,
+      invoice_url: response.response_text,
+      token: response.token
     };
-
-    const response = await axios.post(`${CINETPAY_BASE_URL}`/payment/init, payload);
-
-    if (response.data.code === '201') {
-      return {
-        payment_id: response.data.data.payment_id,
-        transaction_id: transaction_id,
-        payment_url: response.data.data.payment_url
-      };
-    } else {
-      throw new Error(response.data.message || 'Erreur lors de l\'initialisation du paiement');
-    }
   } catch (error) {
-    console.error('Payment initiation error:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Erreur lors de l\'initialisation du paiement');
+    console.error('Erreur lors de la création de la facture PayDunya:', error);
+    throw new Error(error.message || 'Erreur lors de l\'initialisation du paiement');
   }
 };
 
-module.exports = {
-  initiatePayment
+exports.verifyPayment = async (token) => {
+  const invoice = new Paydunya.CheckoutInvoice(setup);
+  try {
+    const response = await invoice.confirm(token);
+    return {
+      status: response.status,
+      response_text: response.response_text,
+      transaction_id: response.transaction_id
+    };
+  } catch (error) {
+    console.error('Erreur lors de la vérification du paiement:', error);
+    throw new Error(error.message || 'Erreur lors de la vérification du paiement');
+  }
 };
