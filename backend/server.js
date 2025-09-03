@@ -116,7 +116,7 @@ app.use("/api/results", resultRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/activities", activityRoutes);
 
-// Healthcheck amélioré
+// Healthcheck amélioré(e)
 app.get("/api/health", (req, res) => {
   const dbStatus = mongoose.connection.readyState;
   let dbStatusText;
