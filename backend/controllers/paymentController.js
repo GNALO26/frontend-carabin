@@ -113,9 +113,9 @@ exports.initiatePayment = async (req, res) => {
     await activity.save();
     
     res.json({
-      success: true,
-      payment_url: paymentData.invoice_url,
-      token: paymentData.token
+  success: true,
+  payment_url: paymentData.invoice_url,  // ← Correction
+  token: paymentData.token
     });
   } catch (error) {
     console.error('Payment initiation error:', error);

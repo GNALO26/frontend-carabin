@@ -5,9 +5,6 @@ const authMiddleware = require('../middlewares/authMiddleware');
 // Ajoutez cette route
 router.post('/initiate-payment', authMiddleware, paymentController.initiatePayment);
 
-// Initier un paiement avec PayDunya
-router.post('/initiate', authMiddleware, paymentController.initiatePayment);
-
 // Vérifier un paiement PayDunya
 router.post('/verify', authMiddleware, paymentController.verifyPayment);
 
